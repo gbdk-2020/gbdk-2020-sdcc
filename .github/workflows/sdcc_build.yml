@@ -1,0 +1,232 @@
+name: Build SDCC for GBDK
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  # Triggers the workflow on push or pull request events but only for the develop branch
+  # push:
+  #   branches: [ develop ]
+  # pull_request:
+  #   branches: [ develop ]
+    inputs:
+      sdcc_version_num:
+        description: 'SDCC Version Number (ex: 13911, 14089)'
+        default: '14089'
+        required: true
+        type: string
+      sdcc_patch_file_url:
+        description: 'url for sdcc patch file ("none" without quotes for none) (-p0, sdcc dir as root)'
+        # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.1.0-sdldz80-sms-virt-addr.patch'
+        default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_v2_merged-patches'
+        type: string        
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            name: Linux-x64
+          - os: ubuntu-20.04
+            name: Win32-On-Linux
+          - os: ubuntu-20.04
+            name: Win64-On-Linux
+          - os: macos-11
+            name: MacOS-x64
+    steps:
+      # ==== Pre-Build: Set environment vars ====
+      # Needs to be in a separate step than build so that setting the environment var takes effect
+      #
+      - name: Pre-Build Linux/MacOS
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
+        shell: bash
+        run: |
+          echo "SDCC_VER=${{ inputs.sdcc_version_num }}" >> $GITHUB_ENV
+          echo "BUILD_PACKAGE_FILENAME=sdcc-${{ inputs.sdcc_version_num }}-${{ matrix.name }}.tar.gz" >> $GITHUB_ENV
+
+      # ==== Install Dependencies ====
+      - name: Install Dependencies Linux
+        if: (matrix.name == 'Linux-x64')
+        run: |
+          # Packages (some may already be present)
+          sudo apt-get install flex bison libboost-dev texinfo zlib1g zlib1g-dev
+
+      - name: Install Dependencies MacOS 64
+        if: (matrix.name == 'MacOS-x64')
+        run: |
+          # Packages (some may already be present)
+          brew install flex bison boost texinfo zlib subversion
+
+      # This could be split apart to separate 32 and 64 bit, but doesn't
+      # take much time and is easier to keep in sync as one stage.
+      - name: Install Dependencies WinCross
+        if: (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
+        run: |
+          # Packages (some may already be present)
+          sudo apt-get -y install flex bison libboost-dev texinfo zlib1g zlib1g-dev g++ make mingw-w64 gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 wine64 subversion
+          sudo ln -s /usr/include/boost/ /usr/x86_64-w64-mingw32/include
+          sudo ln -s /usr/include/boost/ /usr/i686-w64-mingw32/include
+          # Zlib missing for mingw 64 bit (might be an easier way than this)
+          wget https://www.zlib.net/fossils/zlib-1.2.13.tar.gz -O- | tar xfz -
+          cd zlib*
+          make -f Makefile.in clean
+          # zlib 'configure' script had some problem, use win32/Makefile.gcc directly
+          sed -e s/"PREFIX =.*"/"PREFIX = x86_64-w64-mingw32-"/ -i win32/Makefile.gcc # automatic replacement
+          make -f win32/Makefile.gcc
+          sudo BINARY_PATH=/usr/x86_64-w64-mingw32/bin INCLUDE_PATH=/usr/x86_64-w64-mingw32/include LIBRARY_PATH=/usr/x86_64-w64-mingw32/lib make -f win32/Makefile.gcc install
+          # Now add mingw 32 bit version
+          make -f Makefile.in clean
+          sed -e s/"PREFIX =.*"/"PREFIX = i686-w64-mingw32-"/ -i win32/Makefile.gcc # automatic replacement
+          make -f win32/Makefile.gcc
+          sudo BINARY_PATH=/usr/i686-w64-mingw32/bin INCLUDE_PATH=/usr/i686-w64-mingw32/include LIBRARY_PATH=/usr/i686-w64-mingw32/lib make -f win32/Makefile.gcc install
+          cd ..
+
+      # ==== Download SDCC sources ====
+      - name: Download SDCC Sources
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
+        run: |
+          # Checkout SDCC source
+          svn checkout -q -r ${{ env.SDCC_VER }} svn://svn.code.sf.net/p/sdcc/code/trunk sdcc-${{ env.SDCC_VER }}
+          # Apply patch file to source of applicable
+          if [ "${{ inputs.sdcc_patch_file_url }}" = "none" ]; then
+            echo "Patch sdcc: no file specified"
+          else
+            echo "Patch sdcc: ${{ inputs.sdcc_patch_file_url }}"
+            cd sdcc-${{ env.SDCC_VER }}/sdcc
+            curl -Lo gbdk-sdcc-patch-file ${{ inputs.sdcc_patch_file_url }}
+            patch -p0 -f < gbdk-sdcc-patch-file
+            cd ../..
+          fi   
+
+      # ==== Build SDCC Linux / MacOS ====
+      - name: Build SDCC Linux / MacOS
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64')
+        shell: bash
+        run: |    
+          # Target older macOS version than whatever build OS is for better compatibility (Linux should ignore this)
+          export MACOSX_DEPLOYMENT_TARGET=10.10
+          cd sdcc-${{ env.SDCC_VER }}/sdcc
+          # "disable-shared" helps make sdar get statically linked (could also try to apply this on just support/sdbinutils/binutils/)
+          ./configure --disable-shared --enable-gbz80-port  --enable-z80-port  --enable-mos6502-port  --enable-mos65c02-port  --disable-mcs51-port  --disable-z180-port  --disable-r2k-port  --disable-r2ka-port  --disable-r3ka-port  --disable-tlcs90-port  --disable-ez80_z80-port  --disable-z80n-port  --disable-ds390-port  --disable-ds400-port  --disable-pic14-port  --disable-pic16-port  --disable-hc08-port  --disable-s08-port  --disable-stm8-port  --disable-pdk13-port  --disable-pdk14-port  --disable-pdk15-port  --disable-ucsim  --disable-doc  --disable-device-lib 
+          make
+          # New sdcc build no longer copies some binaries to bin
+          find *
+          ls -la bin
+          cp -f src/sdcc bin
+          cp -f support/sdbinutils/binutils/sdar bin
+          cp -f support/sdbinutils/binutils/sdranlib bin
+          cp -f support/sdbinutils/binutils/sdobjcopy bin
+          cp -f support/sdbinutils/binutils/sdnm bin
+          cp -f support/cpp/gcc/cc1 bin
+          cp -f support/cpp/gcc/cpp bin/sdcpp
+          strip bin/* || true
+          # remove .in mapping files, etc
+          rm -f bin/*.in
+          rm -f bin/Makefile
+          rm -f bin/README          
+          # Move cc1 to it's special hardwired path
+          mkdir libexec
+          mkdir libexec/sdcc
+          mv bin/cc1 libexec/sdcc
+          ls -la bin
+          cd ../..
+
+      # ==== Build SDCC WinCross 32 and 64 bit stages ====
+      - name: Build SDCC WinCross 32 Bit
+        if: (matrix.name == 'Win32-On-Linux')
+        shell: bash
+        run: |    
+          cd sdcc-${{ env.SDCC_VER }}/sdcc
+          make clean || true
+          # "disable-shared" helps make sdar get statically linked (could also try to apply this on just support/sdbinutils/binutils/)
+          ./configure \
+          --disable-nls --disable-shared \
+          --prefix=/sdcc --datarootdir=/sdcc docdir=\${datarootdir}/doc include_dir_suffix=include non_free_include_dir_suffix=non-free/include lib_dir_suffix=lib non_free_lib_dir_suffix=non-free/lib sdccconf_h_dir_separator=\\\\  \
+          --enable-sm83-port --enable-z80-port  --enable-mos6502-port   --disable-mcs51-port   --disable-z180-port   --disable-r2k-port   --disable-r2ka-port   --disable-r3ka-port   --disable-tlcs90-port   --disable-ez80_z80-port   --disable-z80n-port   --disable-ds390-port   --disable-ds400-port   --disable-pic14-port   --disable-pic16-port   --disable-hc08-port   --disable-s08-port   --disable-stm8-port   --disable-pdk13-port   --disable-pdk14-port   --disable-pdk15-port   --disable-ucsim   --disable-doc   --disable-device-lib   --host=i686-w64-mingw32
+          make
+          # Download and install Windows 32 bit dependency dlls
+          wget https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/sdcc-extras/sdcc-4.3-win32-dlls.zip
+          unzip sdcc-4.3-win32-dlls.zip
+          ls -la bin
+          cp -f src/sdcc.exe bin
+          cp -f support/sdbinutils/binutils/sdar.exe bin
+          cp -f support/sdbinutils/binutils/sdranlib.exe bin
+          cp -f support/sdbinutils/binutils/sdobjcopy.exe bin
+          cp -f support/sdbinutils/binutils/sdnm.exe bin
+          cp -f support/cpp/gcc/cc1.exe bin
+          cp -f support/cpp/gcc/cpp.exe bin/sdcpp.exe
+          strip bin/* || true
+          # remove .in mapping files, etc
+          rm -f bin/*.in
+          rm -f bin/Makefile
+          rm -f bin/README
+          # Remove shim non-binary files with the same names to avoid confusing Windows later on
+          rm -f bin/sdcc bin/sdcpp bin/sdar bin/sdnm bin/sdranlib bin/sdobjcopy
+          # Move cc1 to it's special hardwired path
+          mkdir libexec
+          mkdir libexec/sdcc
+          # Not sure this has been resolved, but absurdly the windows build of sdcpp.exe (cpp.exe)
+          # can't find cc1 if it has the .exe extension, so strip that when copying
+          mv bin/cc1.exe libexec/sdcc/cc1
+          ls -la bin
+          cd ../..
+
+      - name: Build SDCC WinCross 64 Bit
+        if:  (matrix.name == 'Win64-On-Linux')
+        shell: bash
+        run: |    
+          cd sdcc-${{ env.SDCC_VER }}/sdcc
+          # "disable-shared" helps make sdar get statically linked (could also try to apply this on just support/sdbinutils/binutils/)
+          ./configure \
+          --disable-nls --disable-shared \
+          --prefix=/sdcc --datarootdir=/sdcc docdir=\${datarootdir}/doc include_dir_suffix=include non_free_include_dir_suffix=non-free/include lib_dir_suffix=lib non_free_lib_dir_suffix=non-free/lib sdccconf_h_dir_separator=\\\\ \
+          --enable-sm83-port --enable-z80-port  --enable-mos6502-port   --disable-mcs51-port   --disable-z180-port   --disable-r2k-port   --disable-r2ka-port   --disable-r3ka-port   --disable-tlcs90-port   --disable-ez80_z80-port   --disable-z80n-port   --disable-ds390-port   --disable-ds400-port   --disable-pic14-port   --disable-pic16-port   --disable-hc08-port   --disable-s08-port   --disable-stm8-port   --disable-pdk13-port   --disable-pdk14-port   --disable-pdk15-port   --disable-ucsim   --disable-doc   --disable-device-lib   --host=x86_64-w64-mingw32
+          make
+          # New sdcc build no longer copies some binaries to bin
+          # find *
+          # Download and install Windows 64 bit dependency dlls
+          wget https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/sdcc-extras/sdcc-4.3-win64-dlls.zip
+          unzip sdcc-4.3-win64-dlls.zip
+          ls -la bin
+          cp -f src/sdcc.exe bin
+          cp -f support/sdbinutils/binutils/sdar.exe bin
+          cp -f support/sdbinutils/binutils/sdranlib.exe bin
+          cp -f support/sdbinutils/binutils/sdobjcopy.exe bin
+          cp -f support/sdbinutils/binutils/sdnm.exe bin
+          cp -f support/cpp/gcc/cc1.exe bin
+          cp -f support/cpp/gcc/cpp.exe bin/sdcpp.exe
+          strip bin/* || true
+          # remove .in mapping files, etc
+          rm -f bin/*.in
+          rm -f bin/Makefile
+          rm -f bin/README
+          # Remove shim non-binary files with the same names to avoid confusing Windows later on
+          rm -f bin/sdcc bin/sdcpp bin/sdar bin/sdnm bin/sdranlib bin/sdobjcopy
+          # Move cc1 to it's special hardwired path
+          mkdir libexec
+          mkdir libexec/sdcc
+          # Not sure this has been resolved, but absurdly the windows build of sdcpp.exe (cpp.exe)
+          # can't find cc1 if it has the .exe extension, so strip that when copying
+          mv bin/cc1.exe libexec/sdcc/cc1
+          ls -la bin
+          cd ../..
+
+      # ==== Packaging ====
+      - name: Package build Linux/MacOS
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
+        shell: bash
+        run: |
+          cd sdcc-${{ env.SDCC_VER }}
+          tar cvzf ../${{ env.BUILD_PACKAGE_FILENAME }} sdcc/bin sdcc/libexec
+          cd ..
+          pwd
+          ls -la
+
+      - name: Store build
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
+        uses: actions/upload-artifact@v3
+        with:
+          name: sdcc-${{ inputs.sdcc_version_num }}-${{ matrix.name }}-build
+          path: ${{ env.BUILD_PACKAGE_FILENAME }}
+          if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
+          # retention-days: 14
