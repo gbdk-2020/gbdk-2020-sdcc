@@ -18,7 +18,7 @@ on:
         description: 'url for sdcc patch file ("none" without quotes for none) (-p0, sdcc dir as root)'
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.1.0-sdldz80-sms-virt-addr.patch'
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_v2_merged-patches'
-        default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_nobbanked_v3_combined-patches'
+        default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_nonbanked_v3_combined-patches'
         type: string        
 jobs:
   build:
