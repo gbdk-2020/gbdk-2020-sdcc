@@ -11,7 +11,7 @@ on:
     inputs:
       sdcc_version_num:
         description: 'SDCC Version Number (ex: 13911, 14089, 14228)'
-        default: '14228'
+        default: '14581'
         required: true
         type: string
       sdcc_patch_file_url:
@@ -19,7 +19,8 @@ on:
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.1.0-sdldz80-sms-virt-addr.patch'
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_v2_merged-patches'
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_nonbanked_v3_combined-patches'
-        default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_nonbanked_v4_combined.diff.patch'
+        # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_nonbanked_v4_combined.diff.patch'
+        default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_nonbanked_no_overlay_locals_v6_combined.diff.patch'
         type: string        
 jobs:
   build:
@@ -94,10 +95,12 @@ jobs:
             echo "Patch sdcc: no file specified"
           else
             echo "Patch sdcc: ${{ inputs.sdcc_patch_file_url }}"
-            cd sdcc-${{ env.SDCC_VER }}/sdcc
+            # cd sdcc-${{ env.SDCC_VER }}/sdcc
+            cd sdcc-${{ env.SDCC_VER }}
             curl -Lo gbdk-sdcc-patch-file ${{ inputs.sdcc_patch_file_url }}
             patch -p0 -f < gbdk-sdcc-patch-file
-            cd ../..
+            # cd ../..
+            cd ..
           fi   
 
       # ==== Build SDCC Linux / MacOS ====
