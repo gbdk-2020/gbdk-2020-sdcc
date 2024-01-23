@@ -112,7 +112,7 @@ jobs:
           export MACOSX_DEPLOYMENT_TARGET=10.10
           cd sdcc-${{ env.SDCC_VER }}/sdcc
           # "disable-shared" helps make sdar get statically linked (could also try to apply this on just support/sdbinutils/binutils/)
-          ./configure --disable-shared --enable-gbz80-port  --enable-z80-port  --enable-mos6502-port  --enable-mos65c02-port  --disable-mcs51-port  --disable-z180-port  --disable-r2k-port  --disable-r2ka-port  --disable-r3ka-port  --disable-tlcs90-port  --disable-ez80_z80-port  --disable-z80n-port  --disable-ds390-port  --disable-ds400-port  --disable-pic14-port  --disable-pic16-port  --disable-hc08-port  --disable-s08-port  --disable-stm8-port  --disable-pdk13-port  --disable-pdk14-port  --disable-pdk15-port  --disable-ucsim  --disable-doc  --disable-device-lib 
+          ./configure --disable-shared --enable-gbz80-port  --enable-z80-port  --enable-mos6502-port  --enable-mos65c02-port  --disable-r800-port  --disable-mcs51-port  --disable-z180-port  --disable-r2k-port  --disable-r2ka-port  --disable-r3ka-port  --disable-tlcs90-port  --disable-ez80_z80-port  --disable-z80n-port  --disable-ds390-port  --disable-ds400-port  --disable-pic14-port  --disable-pic16-port  --disable-hc08-port  --disable-s08-port  --disable-stm8-port  --disable-pdk13-port  --disable-pdk14-port  --disable-pdk15-port  --disable-ucsim  --disable-doc  --disable-device-lib 
           make
           # New sdcc build no longer copies some binaries to bin
           find *
@@ -154,7 +154,7 @@ jobs:
           ./configure \
           --disable-nls --disable-shared \
           --prefix=/sdcc --datarootdir=/sdcc docdir=\${datarootdir}/doc include_dir_suffix=include non_free_include_dir_suffix=non-free/include lib_dir_suffix=lib non_free_lib_dir_suffix=non-free/lib sdccconf_h_dir_separator=\\\\  \
-          --enable-sm83-port --enable-z80-port  --enable-mos6502-port   --disable-mcs51-port   --disable-z180-port   --disable-r2k-port   --disable-r2ka-port   --disable-r3ka-port   --disable-tlcs90-port   --disable-ez80_z80-port   --disable-z80n-port   --disable-ds390-port   --disable-ds400-port   --disable-pic14-port   --disable-pic16-port   --disable-hc08-port   --disable-s08-port   --disable-stm8-port   --disable-pdk13-port   --disable-pdk14-port   --disable-pdk15-port   --disable-ucsim   --disable-doc   --disable-device-lib   --host=i686-w64-mingw32
+          --enable-sm83-port --enable-z80-port  --enable-mos6502-port  --disable-r800-port  --disable-mcs51-port   --disable-z180-port   --disable-r2k-port   --disable-r2ka-port   --disable-r3ka-port   --disable-tlcs90-port   --disable-ez80_z80-port   --disable-z80n-port   --disable-ds390-port   --disable-ds400-port   --disable-pic14-port   --disable-pic16-port   --disable-hc08-port   --disable-s08-port   --disable-stm8-port   --disable-pdk13-port   --disable-pdk14-port   --disable-pdk15-port   --disable-ucsim   --disable-doc   --disable-device-lib   --host=i686-w64-mingw32
           make
           # Download and install Windows 32 bit dependency dlls
           wget https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/sdcc-extras/sdcc-4.3-win32-dlls.zip
@@ -192,7 +192,7 @@ jobs:
           ./configure \
           --disable-nls --disable-shared \
           --prefix=/sdcc --datarootdir=/sdcc docdir=\${datarootdir}/doc include_dir_suffix=include non_free_include_dir_suffix=non-free/include lib_dir_suffix=lib non_free_lib_dir_suffix=non-free/lib sdccconf_h_dir_separator=\\\\ \
-          --enable-sm83-port --enable-z80-port  --enable-mos6502-port   --disable-mcs51-port   --disable-z180-port   --disable-r2k-port   --disable-r2ka-port   --disable-r3ka-port   --disable-tlcs90-port   --disable-ez80_z80-port   --disable-z80n-port   --disable-ds390-port   --disable-ds400-port   --disable-pic14-port   --disable-pic16-port   --disable-hc08-port   --disable-s08-port   --disable-stm8-port   --disable-pdk13-port   --disable-pdk14-port   --disable-pdk15-port   --disable-ucsim   --disable-doc   --disable-device-lib   --host=x86_64-w64-mingw32
+          --enable-sm83-port --enable-z80-port  --enable-mos6502-port  --disable-r800-port  --disable-mcs51-port   --disable-z180-port   --disable-r2k-port   --disable-r2ka-port   --disable-r3ka-port   --disable-tlcs90-port   --disable-ez80_z80-port   --disable-z80n-port   --disable-ds390-port   --disable-ds400-port   --disable-pic14-port   --disable-pic16-port   --disable-hc08-port   --disable-s08-port   --disable-stm8-port   --disable-pdk13-port   --disable-pdk14-port   --disable-pdk15-port   --disable-ucsim   --disable-doc   --disable-device-lib   --host=x86_64-w64-mingw32
           make
           # New sdcc build no longer copies some binaries to bin
           # find *
