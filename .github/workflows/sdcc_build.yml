@@ -10,8 +10,8 @@ on:
   #   branches: [ develop ]
     inputs:
       sdcc_version_num:
-        description: 'SDCC Version Number (ex: 13911, 14089, 14228)'
-        default: '14581'
+        description: 'SDCC Version Number (ex: 13911, 14089, 14228, 14581)'
+        default: '14635'
         required: true
         type: string
       sdcc_patch_file_url:
@@ -236,7 +236,7 @@ jobs:
 
       - name: Store build
         if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sdcc-${{ inputs.sdcc_version_num }}-${{ matrix.name }}-build
           path: ${{ env.BUILD_PACKAGE_FILENAME }}
