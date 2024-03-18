@@ -34,14 +34,16 @@ jobs:
             name: Win32-On-Linux
           - os: ubuntu-20.04
             name: Win64-On-Linux
-          - os: macos-11
+          - os: macos-13
             name: MacOS-x64
+          - os: macos-14
+            name: MacOS-arm64            
     steps:
       # ==== Pre-Build: Set environment vars ====
       # Needs to be in a separate step than build so that setting the environment var takes effect
       #
       - name: Pre-Build Linux/MacOS
-        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
         shell: bash
         run: |
           echo "SDCC_VER=${{ inputs.sdcc_version_num }}" >> $GITHUB_ENV
@@ -55,10 +57,10 @@ jobs:
           sudo apt-get install flex bison libboost-dev texinfo zlib1g zlib1g-dev
 
       - name: Install Dependencies MacOS 64
-        if: (matrix.name == 'MacOS-x64')
+        if: (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64')
         run: |
           # Packages (some may already be present)
-          brew install flex bison boost texinfo zlib subversion
+          env HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 brew install flex bison boost texinfo zlib subversion
 
       # This could be split apart to separate 32 and 64 bit, but doesn't
       # take much time and is easier to keep in sync as one stage.
@@ -86,7 +88,7 @@ jobs:
 
       # ==== Download SDCC sources ====
       - name: Download SDCC Sources
-        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
         run: |
           # Checkout SDCC source
           svn checkout -q -r ${{ env.SDCC_VER }} svn://svn.code.sf.net/p/sdcc/code/trunk sdcc-${{ env.SDCC_VER }}
@@ -105,9 +107,17 @@ jobs:
 
       # ==== Build SDCC Linux / MacOS ====
       - name: Build SDCC Linux / MacOS
-        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64')
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64')
         shell: bash
         run: |    
+          if [ "${{ matrix.name }}" = "MacOS-arm64" ]; then
+            # MacOS arm64 homebrew installs libs to /opt/homebrew rather than /usr/local so set LDFLAGS/CPPFLAGS
+            # Clang seems to always use dynamic libraries where available to so copying static libraries to another folder
+            sudo mkdir /opt/homebrew/lib-static
+            sudo cp -r /opt/homebrew/lib/*.a /opt/homebrew/lib-static
+            export LDFLAGS="-L/opt/homebrew/lib-static"
+            export CPPFLAGS="-I/opt/homebrew/include"
+          fi
           # Target older macOS version than whatever build OS is for better compatibility (Linux should ignore this)
           export MACOSX_DEPLOYMENT_TARGET=10.10
           cd sdcc-${{ env.SDCC_VER }}/sdcc
@@ -225,7 +235,7 @@ jobs:
 
       # ==== Packaging ====
       - name: Package build Linux/MacOS
-        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
         shell: bash
         run: |
           cd sdcc-${{ env.SDCC_VER }}
@@ -235,7 +245,7 @@ jobs:
           ls -la
 
       - name: Store build
-        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
         uses: actions/upload-artifact@v4
         with:
           name: sdcc-${{ inputs.sdcc_version_num }}-${{ matrix.name }}-build
