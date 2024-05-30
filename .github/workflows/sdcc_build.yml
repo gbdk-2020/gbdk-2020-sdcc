@@ -70,7 +70,7 @@ jobs:
         if: (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
         run: |
           # Packages (some may already be present)
-          sudo apt-get -y install flex bison libboost-dev texinfo zlib1g zlib1g-dev g++ make mingw-w64 gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 wine64 subversion
+          sudo apt-get -y install flex bison libboost-dev texinfo zlib1g zlib1g-dev g++ make mingw-w64 gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 subversion
           sudo ln -s /usr/include/boost/ /usr/x86_64-w64-mingw32/include
           sudo ln -s /usr/include/boost/ /usr/i686-w64-mingw32/include
           # Zlib missing for mingw 64 bit (might be an easier way than this)
