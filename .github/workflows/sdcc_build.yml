@@ -10,8 +10,8 @@ on:
   #   branches: [ develop ]
     inputs:
       sdcc_version_num:
-        description: 'SDCC Version Number (ex: 13911, 14089, 14228, 14581)'
-        default: '14635'
+        description: 'SDCC Version Number (ex: 13911, 14089, 14228, 14581, 14635)'
+        default: '14865'
         required: true
         type: string
       sdcc_patch_file_url:
@@ -21,7 +21,8 @@ on:
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_nonbanked_v3_combined-patches'
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_nonbanked_v4_combined.diff.patch'
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_nonbanked_no_overlay_locals_v6_combined.diff.patch'
-        default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.3.0-nes_banked_nonbanked_no_overlay_locals_v7_combined.diff.patch'
+        # (14635) # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.3.0-nes_banked_nonbanked_no_overlay_locals_v7_combined.diff.patch'
+        default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.3-nes_banked_nonbanked_no_overlay_locals_v8_combined.patch'
         type: string        
 jobs:
   build:
@@ -69,7 +70,7 @@ jobs:
         if: (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
         run: |
           # Packages (some may already be present)
-          sudo apt-get -y install flex bison libboost-dev texinfo zlib1g zlib1g-dev g++ make mingw-w64 gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 wine64 subversion
+          sudo apt-get -y install flex bison libboost-dev texinfo zlib1g zlib1g-dev g++ make mingw-w64 gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 subversion
           sudo ln -s /usr/include/boost/ /usr/x86_64-w64-mingw32/include
           sudo ln -s /usr/include/boost/ /usr/i686-w64-mingw32/include
           # Zlib missing for mingw 64 bit (might be an easier way than this)
