@@ -128,11 +128,11 @@ jobs:
             export LDFLAGS="-L/opt/homebrew/lib-static"
             export CPPFLAGS="-I/opt/homebrew/include"
             # Add manually installed boost
-            export DYLD_LIBRARY_PATH=/usr/local/boost-1.83.0/lib:$DYLD_LIBRARY_PATH            
+            export DYLD_LIBRARY_PATH=/usr/local/boost-1.83.0:$DYLD_LIBRARY_PATH            
           fi
           if [ "${{ matrix.name }}" = "MacOS-x64" ]; then
             # Add manually installed boost          
-            export DYLD_LIBRARY_PATH=/usr/local/boost-1.83.0/lib:$DYLD_LIBRARY_PATH          
+            export DYLD_LIBRARY_PATH=/usr/local/boost-1.83.0:$DYLD_LIBRARY_PATH          
           fi
           # Target older macOS version than whatever build OS is for better compatibility (Linux should ignore this)
           export MACOSX_DEPLOYMENT_TARGET=10.10
