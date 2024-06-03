@@ -66,8 +66,11 @@ jobs:
           # No boost 1.85.0 via homebrew since it brak sdcc
           env HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 brew install flex bison texinfo zlib subversion
           # manual boost install with Clang
+          wget https://archives.boost.io/release/1.83.0/source/boost_1_83_0.tar.gz -O- | tar xfz -
+          cd boost*
           ./bootstrap.sh --prefix=/usr/local/boost-1.83.0
           sudo ./b2 cxxflags=-std=c++17 install
+          cd ..
 
       # This could be split apart to separate 32 and 64 bit, but doesn't
       # take much time and is easier to keep in sync as one stage.
