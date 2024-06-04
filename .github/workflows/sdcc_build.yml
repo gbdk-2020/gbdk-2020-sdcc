@@ -11,7 +11,7 @@ on:
     inputs:
       sdcc_version_num:
         description: 'SDCC Version Number (ex: 13911, 14089, 14228, 14581, 14635)'
-        default: '14865'
+        default: '14878'
         required: true
         type: string
       sdcc_patch_file_url:
@@ -62,7 +62,15 @@ jobs:
         if: (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64')
         run: |
           # Packages (some may already be present)
-          env HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 brew install flex bison boost texinfo zlib subversion
+          # env HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 brew install flex bison boost texinfo zlib subversion
+          # No boost 1.85.0 via homebrew since it brak sdcc
+          env HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 brew install flex bison texinfo zlib subversion
+          # manual boost install with Clang
+          wget https://archives.boost.io/release/1.83.0/source/boost_1_83_0.tar.gz -O- | tar xfz -
+          cd boost*
+          ./bootstrap.sh --prefix=/usr/local
+          sudo ./b2 cxxflags=-std=c++17 install
+          cd ..
 
       # This could be split apart to separate 32 and 64 bit, but doesn't
       # take much time and is easier to keep in sync as one stage.
@@ -119,6 +127,14 @@ jobs:
             sudo cp -r /opt/homebrew/lib/*.a /opt/homebrew/lib-static
             export LDFLAGS="-L/opt/homebrew/lib-static"
             export CPPFLAGS="-I/opt/homebrew/include"
+            # Add manually installed boost
+            export DYLD_LIBRARY_PATH=/usr/local:$DYLD_LIBRARY_PATH
+            export BOOST_ROOT=/usr/local
+          fi
+          if [ "${{ matrix.name }}" = "MacOS-x64" ]; then
+            # Add manually installed boost          
+            export DYLD_LIBRARY_PATH=/usr/local:$DYLD_LIBRARY_PATH
+            export BOOST_ROOT=/usr/local
           fi
           # Target older macOS version than whatever build OS is for better compatibility (Linux should ignore this)
           export MACOSX_DEPLOYMENT_TARGET=10.10
