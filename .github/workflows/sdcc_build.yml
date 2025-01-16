@@ -32,6 +32,8 @@ jobs:
         include:
           - os: ubuntu-20.04
             name: Linux-x64
+          - os: ubuntu-22.04-arm  
+            name: Linux-arm64
           - os: ubuntu-20.04
             name: Win32-On-Linux
           - os: ubuntu-20.04
@@ -45,7 +47,7 @@ jobs:
       # Needs to be in a separate step than build so that setting the environment var takes effect
       #
       - name: Pre-Build Linux/MacOS
-        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'Linux-arm64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
         shell: bash
         run: |
           echo "SDCC_VER=${{ inputs.sdcc_version_num }}" >> $GITHUB_ENV
@@ -53,7 +55,7 @@ jobs:
 
       # ==== Install Dependencies ====
       - name: Install Dependencies Linux
-        if: (matrix.name == 'Linux-x64')
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'Linux-arm64') 
         run: |
           # Packages (some may already be present)
           sudo apt-get install flex bison libboost-dev texinfo zlib1g zlib1g-dev
@@ -98,7 +100,7 @@ jobs:
 
       # ==== Download SDCC sources ====
       - name: Download SDCC Sources
-        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'Linux-arm64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
         run: |
           # Checkout SDCC source
           svn checkout -q -r ${{ env.SDCC_VER }} svn://svn.code.sf.net/p/sdcc/code/trunk sdcc-${{ env.SDCC_VER }}
@@ -117,7 +119,7 @@ jobs:
 
       # ==== Build SDCC Linux / MacOS ====
       - name: Build SDCC Linux / MacOS
-        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64')
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'Linux-arm64') ||(matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64')
         shell: bash
         run: |    
           if [ "${{ matrix.name }}" = "MacOS-arm64" ]; then
@@ -253,7 +255,7 @@ jobs:
 
       # ==== Packaging ====
       - name: Package build Linux/MacOS
-        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'Linux-arm64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
         shell: bash
         run: |
           cd sdcc-${{ env.SDCC_VER }}
@@ -263,7 +265,7 @@ jobs:
           ls -la
 
       - name: Store build
-        if: (matrix.name == 'Linux-x64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
+        if: (matrix.name == 'Linux-x64') || (matrix.name == 'Linux-arm64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
         uses: actions/upload-artifact@v4
         with:
           name: sdcc-${{ inputs.sdcc_version_num }}-${{ matrix.name }}-build
