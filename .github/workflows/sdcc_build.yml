@@ -10,8 +10,8 @@ on:
   #   branches: [ develop ]
     inputs:
       sdcc_version_num:
-        description: 'SDCC Version Number (ex: 13911, 14089, 14228, 14581, 14635,14880)'
-        default: '14650'
+        description: 'SDCC Version Number (ex: 15224)'
+        default: '15224'
         required: true
         type: string
       sdcc_patch_file_url:
@@ -22,7 +22,8 @@ on:
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_nonbanked_v4_combined.diff.patch'
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_nonbanked_no_overlay_locals_v6_combined.diff.patch'
         # (14635) # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.3.0-nes_banked_nonbanked_no_overlay_locals_v7_combined.diff.patch'
-        default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.3-nes_banked_nonbanked_no_overlay_locals_v8_combined.patch'
+        # (14650) # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.3-nes_banked_nonbanked_no_overlay_locals_v8_combined.patch'
+        default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/sdcc_15224__gbdk_4.4.0_patches_v9_individual.zip'
         type: string        
 jobs:
   build:
@@ -57,8 +58,12 @@ jobs:
       - name: Install Dependencies Linux
         if: (matrix.name == 'Linux-x64') || (matrix.name == 'Linux-arm64') 
         run: |
+          #  SDCC Blocks buggy boosts version boost 1.71-1.79.0, often present on ubuntu
+          sudo add-apt-repository ppa:mhier/libboost-latest
+          sudo apt update
+          sudo apt-get -y --purge remove libboost-all-dev libboost-doc libboost-dev
           # Packages (some may already be present)
-          sudo apt-get install flex bison libboost-dev texinfo zlib1g zlib1g-dev
+          sudo apt-get install flex bison boost1.81-dev texinfo zlib1g zlib1g-dev
 
       - name: Install Dependencies MacOS 64
         if: (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64')
@@ -79,8 +84,12 @@ jobs:
       - name: Install Dependencies WinCross
         if: (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
         run: |
+          #  SDCC Blocks buggy boosts version boost 1.71-1.79.0, often present on ubuntu
+          sudo add-apt-repository ppa:mhier/libboost-latest
+          sudo apt update
+          sudo apt-get -y --purge remove libboost-all-dev libboost-doc libboost-dev
           # Packages (some may already be present)
-          sudo apt-get -y install flex bison libboost-dev texinfo zlib1g zlib1g-dev g++ make mingw-w64 gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 subversion
+          sudo apt-get -y install flex bison boost1.81-dev texinfo zlib1g zlib1g-dev g++ make mingw-w64 gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 subversion
           sudo ln -s /usr/include/boost/ /usr/x86_64-w64-mingw32/include
           sudo ln -s /usr/include/boost/ /usr/i686-w64-mingw32/include
           # Zlib missing for mingw 64 bit (might be an easier way than this)
@@ -101,7 +110,9 @@ jobs:
       # ==== Download SDCC sources ====
       - name: Download SDCC Sources
         if: (matrix.name == 'Linux-x64') || (matrix.name == 'Linux-arm64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
-        run: |
+        run: |    
+          # Try not to hammer the svn server too much at once, stagger matrix jobs a bit
+          sleep $((60 * ${{ strategy.job-index }} ))
           # Checkout SDCC source
           svn checkout -q -r ${{ env.SDCC_VER }} svn://svn.code.sf.net/p/sdcc/code/trunk sdcc-${{ env.SDCC_VER }}
           # Apply patch file to source of applicable
@@ -111,8 +122,9 @@ jobs:
             echo "Patch sdcc: ${{ inputs.sdcc_patch_file_url }}"
             # cd sdcc-${{ env.SDCC_VER }}/sdcc
             cd sdcc-${{ env.SDCC_VER }}
-            curl -Lo gbdk-sdcc-patch-file ${{ inputs.sdcc_patch_file_url }}
-            patch -p0 -f < gbdk-sdcc-patch-file
+            curl -Lo gbdk-sdcc-patch-files.zip ${{ inputs.sdcc_patch_file_url }}
+            unzip gbdk-sdcc-patch-files.zip
+            for file in $(ls -v *.patch); do echo "$file"; patch -p0 -f < "$file"; done
             # cd ../..
             cd ..
           fi   

@@ -1,0 +1,23 @@
+Index: sdcc/sdas/linksrc/lkmem.c
+===================================================================
+--- sdcc/sdas/linksrc/lkmem.c	(revision 14068)
++++ sdcc/sdas/linksrc/lkmem.c	(working copy)
+@@ -44,7 +44,8 @@
+ 
+     char buff[128];
+     int j, toreturn=0;
+-    unsigned int Total_Last=0, k;
++    unsigned int Total_Last=0;
++    int k;
+ 
+     struct area * xp;
+     FILE * of;
+@@ -274,7 +275,7 @@
+ 
+     /*Compute the amount of unused memory in direct data Ram.  This is the
+     gap between the last register bank or bit segment and the data segment.*/
+-    for(k=Ram[6].Start-1; (dram[k]==0) && (k>0); k--);
++    for(k=Ram[6].Start-1; (k>0) && (dram[k]==0); k--);
+     Ram[5].Start=k+1;
+     Ram[5].Size=Ram[6].Start-Ram[5].Start; /*It may be zero (which is good!)*/
+ 

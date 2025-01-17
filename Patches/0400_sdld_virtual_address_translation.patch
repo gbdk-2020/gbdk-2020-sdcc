@@ -1,0 +1,268 @@
+Index: sdcc/sdas/linksrc/aslink.h
+===================================================================
+--- sdcc/sdas/linksrc/aslink.h	(revision 14868)
++++ sdcc/sdas/linksrc/aslink.h	(working copy)
+@@ -381,7 +381,17 @@
+                                  */
+ /* end sdld specific */
+ 
++/* Options for platform specific virtual address translation
++*
++*
++*/
++#define PLATFORM_NONE         0      /* Default address handling */
++#define PLATFORM_SMS          1      /* SMS/GG specific virtual address handling */
++#define PLATFORM_NES          2      /* NES/Famicom specific virtual address handling */
+ 
++#define PLATFORM_SMS_STR      "sms"
++#define PLATFORM_NES_STR      "nes"
++
+ /*
+  *	The "A4_" area constants define values used in
+  *	generating the assembler area output data.
+@@ -1040,6 +1050,8 @@
+                                  */
+ extern  int     uflag;          /*      Listing relocation flag
+                                  */
++extern  int     platform;       /*      Select platform specific virtual address translation
++                                 */
+ extern  int     wflag;          /*      Enable wide format listing
+                                  */
+ extern  int     zflag;          /*      Disable symbol case sensitivity
+@@ -1161,6 +1173,7 @@
+ extern  VOID            bassav(void);
+ extern  int             fndidx(char *str);
+ extern  int             fndext(char *str);
++extern  VOID            platset(void);
+ extern  VOID            gblsav(void);
+ extern  int             intsiz(void);
+ extern  VOID            iramsav(void);
+Index: sdcc/sdas/linksrc/lkarea.c
+===================================================================
+--- sdcc/sdas/linksrc/lkarea.c	(revision 14868)
++++ sdcc/sdas/linksrc/lkarea.c	(working copy)
+@@ -321,6 +321,8 @@
+  *                                      area structure
+  *              area    *areap          The pointer to the first
+  *                                      area structure of a linked list
++ *              int     platform        selects platform specific
++ *                                      virtual address translation
+  *
+  *      functions called:
+  *              int     fprintf()       c_library
+@@ -336,7 +338,7 @@
+  */
+ 
+ /* sdld6808 specific */
+-unsigned long codemap6808[2048];
++unsigned long codemap6808[524288];
+ /* end sdld6808 specific */
+ /* sdld specific */
+ VOID lnksect(struct area *tap);
+@@ -424,6 +426,30 @@
+                                 ap->a_addr = (atoi(ap->a_id+6) << 16) + 0xA000;
+                         }
+                 }
++                // Z80 sms/gg virtual address / mapper handling
++                if (TARGET_IS_Z80 && (platform == PLATFORM_SMS) && ap->a_addr == 0) {
++                        // Standard sega sms/gg mapper used by most
++                        if (!strncmp(ap->a_id, "_CODE_", 6) && atoi(ap->a_id+6)!=0) {
++                                ap->a_addr = (atoi(ap->a_id+6) << 16) + 0x4000;
++                        }
++                        if (!strncmp(ap->a_id, "_LIT_", 5) && atoi(ap->a_id+5)!=0) {
++                                ap->a_addr = (atoi(ap->a_id+5) << 16) + 0x8000;
++                        }
++                        if (!strncmp(ap->a_id, "_DATA_", 6)) {
++                                // set sane default values for ram banking
++                                ap->a_addr = (atoi(ap->a_id+6) << 16) + 0x8000;
++                        }
++                }
++                if((platform == PLATFORM_NES) && ap->a_addr == 0) {
++                        if(!strncmp(ap->a_id, "_CODE_", 6)) {
++                                // set sane default values for rom banking
++                                // 0x8000 is correct for most NES mappers with 
++                                // 16kB switching, such as UNROM.
++                                ap->a_addr = (atoi(ap->a_id+6) << 16) + 0x8000;
++                                // Set this to prevent further odd & unexpected relocation further down
++                                ap->a_bset = 1;
++                        }
++                }
+                 if (ap->a_flag & A3_ABS) {
+                         /*
+                          * Absolute sections
+Index: sdcc/sdas/linksrc/lkdata.c
+===================================================================
+--- sdcc/sdas/linksrc/lkdata.c	(revision 14868)
++++ sdcc/sdas/linksrc/lkdata.c	(working copy)
+@@ -84,6 +84,8 @@
+                          */
+ int     uflag;          /*      Listing relocation flag
+                          */
++int     platform;       /*      Select platform specific virtual address translation
++                         */
+ int     wflag;          /*      Enable wide format listing
+                          */
+ int     zflag;          /*      Disable symbol case sensitivity
+@@ -148,6 +150,8 @@
+ /* sdld specific */
+ char    *optsdcc;
+ char    *optsdcc_module;
++int     platform = PLATFORM_NONE; /* Select platform specific virtual address translation
++                         */
+ int     sflag;          /*      JCF: Memory usage output flag
+                          */
+ int     stacksize=0;    /*      JCF: Stack size
+Index: sdcc/sdas/linksrc/lkmain.c
+===================================================================
+--- sdcc/sdas/linksrc/lkmain.c	(revision 14868)
++++ sdcc/sdas/linksrc/lkmain.c	(working copy)
+@@ -226,6 +226,10 @@
+                                 /*
+                                  * Options with arguments
+                                  */
++                                case 'a':
++                                case 'A':
++                                        pflag = 0;
++
+                                 case 'b':
+                                 case 'B':
+ 
+@@ -904,6 +908,7 @@
+  *              int     oflag           Output file type flag
+  *              int     objflg          Linked file/library output object flag
+  *              int     pflag           print linker command file flag
++ *              int     platform        Selects platform specific virtual address translation
+  *              FILE *  stderr          c_library
+  *              int     uflag           Relocated listing flag
+  *              int     xflag           Map file radix type flag
+@@ -913,6 +918,7 @@
+  *      Functions called:
+  *              VOID    addlib()        lklibr.c
+  *              VOID    addpath()       lklibr.c
++ *              VOID    platset()       lkmain.c
+  *              VOID    bassav()        lkmain.c
+  *              VOID    doparse()       lkmain.c
+  *              int     fprintf()       c_library
+@@ -946,6 +952,13 @@
+                         while (ctype[c=get()] & LETTER) {
+                                 switch(c) {
+ 
++                                case 'a':
++                                case 'A':
++                                        if (is_sdld()) {
++                                            platset();
++                                        }
++                                        return(0);
++
+                                 case 'C':
+                                         if (is_sdld() && !(TARGET_IS_Z80 || TARGET_IS_GB)) {
+                                                 codesav();
+@@ -1229,6 +1242,47 @@
+         startp->f_type = 0;
+ }
+ 
++/*)Function     VOID    platset()
++ *
++ *      The function platset() sets variable which stores platform
++ *      specific virtual address translation.
++ *
++ *      local variables:
++ *              none
++ *
++ *      global variables:
++ *              int     platform        selects platform specific
++ *                                      virtual address translation
++ *              char    *ip             pointer into the REL file
++ *                                      text line in ib[]
++ *
++ *       functions called:
++ *              int     fprintf()       c_library
++ *              int     getnb()         lklex.c
++ *              int     strcmp()        c_library
++ *              VOID    unget()         lklex.c
++ *
++ *      side effects:
++ *              The basep structure is created.
++ */
++
++VOID
++platset()
++{
++        unget(getnb());
++        if (strcmp(ip, PLATFORM_SMS_STR) == 0) {
++                platform = PLATFORM_SMS;
++                return;
++        }
++        else if (strcmp(ip, PLATFORM_NES_STR) == 0) {
++                platform = PLATFORM_NES;
++                return;
++        }
++        fprintf(stderr,
++        "No matching platform found for: %s\n", ip);
++}
++
++
+ /*)Function     VOID    bassav()
+  *
+  *      The function bassav() creates a linked structure containing
+@@ -1698,6 +1752,7 @@
+         "Relocation:",
+         "  -b   area base address = expression",
+         "  -g   global symbol = expression",
++        "  -a   (platform) Select platform specific virtual address translation",
+         "Map format:",
+         "  -m   Map output generated as (out)file[.map]",
+         "  -w   Wide listing format for map file",
+@@ -1741,6 +1796,7 @@
+         "Relocation:",
+         "  -b   area base address = expression",
+         "  -g   global symbol = expression",
++        "  -a   (platform) Select platform specific virtual address translation",
+         "Map format:",
+         "  -m   Map output generated as (out)file[.map]",
+         "  -w   Wide listing format for map file",
+Index: sdcc/sdas/linksrc/lkout.c
+===================================================================
+--- sdcc/sdas/linksrc/lkout.c	(revision 14868)
++++ sdcc/sdas/linksrc/lkout.c	(working copy)
+@@ -364,6 +364,8 @@
+  *      global variables:
+  *              int     a_bytes         T Line Address Bytes
+  *              FILE *  ofp             output file handle
++ *              int     platform        selects platform specific
++ *                                      virtual address translation
+  *              int     rtaflg          first output flag
+  *              char    rtbuf[]         output buffer
+  *              a_uint  rtadr0          address temporary
+@@ -401,6 +403,31 @@
+                         rrtadr0 = (rrtadr0>>16) * 0x4000 + (rrtadr0&0xffff) - 0x4000;
+         }
+ 
++        // translate virtual addresses for sms/gg
++        if(platform == PLATFORM_SMS){
++                if(rrtadr0 >= 0x10000)
++                        rrtadr0 = ((rrtadr0 >> 16) * 0x4000) + (rrtadr0 & 0x3FFF);
++        }
++
++        // translate virtual addresses for NES/Famicom
++        if(platform == PLATFORM_NES){
++                int bank_number;
++                if((rrtadr0 & 0xC000) == 0xC000)
++                {
++                    // Place fixed bank as bank 0 / first bank of ROM for simpler handling
++                    // (.nes file creation will put it as the *last* bank by rotating the ROM file) 
++                    bank_number = 0;
++                    rrtadr0 = (bank_number * 0x4000) + (rrtadr0 & 0x3FFF);
++                }
++                else if((rrtadr0 & 0xC000) == 0x8000)
++                {
++                    // Place switchable bank one bank higher than intended in ROM
++                    // (.nes file creation will relocate it to correct bank by rotating the ROM file)
++                    int bank_number = (rrtadr0 >> 16) + 1;
++                    rrtadr0 = (bank_number * 0x4000) + (rrtadr0 & 0x3FFF);
++                }
++        }
++
+         max = (int) (rtadr1 - rtadr0);
+         if (max) {
+                 if (a_bytes > 2) {
