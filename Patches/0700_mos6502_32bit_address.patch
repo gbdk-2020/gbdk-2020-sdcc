@@ -1,0 +1,13 @@
+Index: sdcc/sdas/as6500/r65mch.c
+===================================================================
+--- sdcc/sdas/as6500/r65mch.c	(revision 14868)
++++ sdcc/sdas/as6500/r65mch.c	(working copy)
+@@ -693,7 +693,7 @@
+ 	/*
+ 	 * Address Space
+ 	 */
+-	exprmasks(3);
++	exprmasks(4);
+ 	
+ 	/*
+ 	 * Zero Page Area Pointer

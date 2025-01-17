@@ -1,0 +1,19 @@
+Index: sdcc/sdas/linksrc/lkmain.c
+===================================================================
+--- sdcc/sdas/linksrc/lkmain.c	(revision 14581)
++++ sdcc/sdas/linksrc/lkmain.c	(working copy)
+@@ -1490,8 +1490,14 @@
+ #endif
+         }
+         if ((fp = fopen(afspec, frmt)) == NULL && strcmp(ft,"adb") != 0) { /* Do not complain for optional adb files */
++            if(strcmp(ft,"lst") == 0) {
++                /* For optional lst files, just print a warning and continue */
++                fprintf(stderr, "?ASlink-Warning-<cannot %s> : \"%s\"\n", wf?"create":"open", afspec);
++            }
++            else {
+                 fprintf(stderr, "?ASlink-Error-<cannot %s> : \"%s\"\n", wf?"create":"open", afspec);
+                 lkerr++;
++            }
+         }
+         return (fp);
+ }

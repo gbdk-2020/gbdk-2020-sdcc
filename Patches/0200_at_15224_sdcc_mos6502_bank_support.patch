@@ -1,0 +1,405 @@
+diff -rupN ../sdcc-code-14868_with_mos6502_underscored_segments/sdcc/src/mos6502/gen.c ./sdcc/src/mos6502/gen.c
+--- ../sdcc-code-14868_with_mos6502_underscored_segments/sdcc/src/mos6502/gen.c	2024-05-28 17:29:28.585759700 +0100
++++ ./sdcc/src/mos6502/gen.c	2024-05-28 20:11:41.475759700 +0100
+@@ -80,6 +80,7 @@ static struct
+   int lastflag;
+   struct attr_t tempAttr[NUM_TEMP_REGS];
+   struct attr_t DPTRAttr[2];
++  bool in_home;
+ } _G;
+ 
+ extern int m6502_ptrRegReq;
+@@ -180,6 +181,33 @@ safeLabelNum(symbol * a)
+   return 0;
+ }
+ 
++/* Duplicated from z80/gen.c */
++/* This is quite unfortunate */
++static void
++setArea (int inHome)
++{
++  /*
++     static int lastArea = 0;
++
++     if (_G.in_home != inHome) {
++     if (inHome) {
++     const char *sz = port->mem.code_name;
++     port->mem.code_name = "HOME";
++     emit2("!area", CODE_NAME);
++     port->mem.code_name = sz;
++     }
++     else
++     emit2("!area", CODE_NAME); */
++  _G.in_home = inHome;
++  //    }
++}
++
++static bool
++isInHome (void)
++{
++  return _G.in_home;
++}
++
+ /**************************************************************************
+  * Returns the cycle count for the instruction
+  *
+@@ -4575,6 +4603,69 @@ genSend (set *sendSet)
+     }
+ }
+ 
++// From z80/gen.c
++static void
++_tidyUp (char *buf)
++{
++  /* Clean up the line so that it is 'prettier' */
++  /* If it is a label - can't do anything */
++  if (!strchr (buf, ':'))
++    {
++      /* Change the first (and probably only) ' ' to a tab so
++         everything lines up.
++       */
++      while (*buf)
++        {
++          if (*buf == ' ')
++            {
++              *buf = '\t';
++              break;
++            }
++          buf++;
++        }
++    }
++}
++
++static void
++_vemit2 (const char *szFormat, va_list ap)
++{
++  struct dbuf_s dbuf;
++  char *buffer, *p, *nextp;
++
++  dbuf_init (&dbuf, INITIAL_INLINEASM);
++
++  dbuf_tvprintf (&dbuf, szFormat, ap);
++
++  buffer = p = dbuf_detach_c_str (&dbuf);
++
++  _tidyUp (p);
++
++  /* Decompose multiline macros */
++  while ((nextp = strchr (p, '\n')))
++    {
++      *nextp = '\0';
++      emit_raw (p);
++      p = nextp + 1;
++    }
++
++  emit_raw (p);
++
++  dbuf_free (buffer);
++}
++
++static void
++emit2 (const char *szFormat, ...)
++{
++  if (!regalloc_dry_run)
++    {
++      va_list ap;
++
++      va_start (ap, szFormat);
++      _vemit2 (szFormat, ap);
++      va_end (ap);
++    }
++}
++
+ /**************************************************************************
+  * genCall - generates a call statement
+  *************************************************************************/
+@@ -4616,8 +4707,18 @@ genCall (iCode * ic)
+   } else {
+     bool jump = (!ic->parmBytes && IFFUNC_ISNORETURN (OP_SYMBOL (left)->type));
+ 
+-    emit6502op (jump ? "jmp" : "jsr", "%s", (OP_SYMBOL (left)->rname[0] ?
+-                                             OP_SYMBOL (left)->rname : OP_SYMBOL (left)->name));
++      if (IFFUNC_ISBANKEDCALL (dtype) && !jump)
++        {
++          char *name = OP_SYMBOL (IC_LEFT (ic))->rname[0] ? OP_SYMBOL (IC_LEFT (ic))->rname : OP_SYMBOL (IC_LEFT (ic))->name;
++          emit2 ("jsr ___sdcc_bcall");
++          emit2 ("!db !bankimmeds", name);
++          emitcode (".dw ", "%s-1", name);
++        }
++      else
++        {
++          emit6502op (jump ? "jmp" : "jsr", "%s", (OP_SYMBOL (left)->rname[0] ?
++                                  OP_SYMBOL (left)->rname : OP_SYMBOL (left)->name));
++        }
+   }
+ 
+   m6502_dirtyReg (m6502_reg_a);
+@@ -4802,6 +4903,8 @@ static void genFunction (iCode * ic)
+   int stackAdjust = sym->stack;
+   //  int accIsFree = sym->recvSize == 0;
+ 
++  setArea (IFFUNC_NONBANKED (sym->type));
++
+   /* create the function header */
+   emitComment (ALWAYS, "-----------------------------------------");
+   emitComment (ALWAYS, " function %s", sym->name);
+@@ -4809,6 +4912,20 @@ static void genFunction (iCode * ic)
+   emitComment (ALWAYS, m6502_assignment_optimal ? "Register assignment is optimal." : "Register assignment might be sub-optimal.");
+   emitComment (ALWAYS, "Stack space usage: %d bytes.", sym->stack);
+ 
++  if (IFFUNC_BANKED (sym->type))
++    {
++      int bank_number = 0;
++      for (int i  = strlen (options.code_seg)-1; i >= 0; i--)
++        {
++          if (!isdigit (options.code_seg[i]) && options.code_seg[i+1] != '\0')
++            {
++              bank_number = atoi (&options.code_seg[i+1]);
++              break;
++            }
++        }
++      emit2("!bequ", sym->rname, bank_number);
++    }
++
+   emitcode ("", "%s:", sym->rname);
+   genLine.lineCurr->isLabel = 1;
+   ftype = operandType (IC_LEFT (ic));
+@@ -10786,6 +10903,11 @@ genm6502Code (iCode *lic)
+   if (!options.nopeep)
+     peepHole (&genLine.lineHead);
+ 
++  /* Duplicated from z80/gen.c */
++  /* This is unfortunate */
++  if (isInHome () && codeOutBuf == &code->oBuf)
++    codeOutBuf = &home->oBuf;
++
+   /* now do the actual printing */
+   printLine (genLine.lineHead, codeOutBuf);
+ 
+Index: sdcc/src/mos6502/main.c
+===================================================================
+--- sdcc/src/mos6502/main.c	(revision 15224)
++++ sdcc/src/mos6502/main.c	(working copy)
+@@ -30,6 +30,7 @@
+ #include "m6502.h"
+ #include "peep.h"
+ 
++#define OPTION_BO               "-bo"
+ #define OPTION_SMALL_MODEL      "--model-small"
+ #define OPTION_LARGE_MODEL      "--model-large"
+ //#define OPTION_XDATA_OVR        "--xdata-overlay"
+@@ -83,6 +84,8 @@
+   "at",
+   "critical",
+   "interrupt",
++  "nonbanked",
++  "banked",
+   "naked",
+   "reentrant",
+   "code",
+@@ -154,10 +157,146 @@
+   return 1+_G.regparam.n-size;
+ }
+ 
++enum
++{
++  P_BANK = 1,
++  P_PORTMODE,
++  P_CODESEG,
++  P_CONSTSEG,
++};
++
++static int
++do_pragma (int id, const char *name, const char *cp)
++{
++  struct pragma_token_s token;
++  int err = 0;
++  int processed = 1;
++
++  init_pragma_token (&token);
++
++  switch (id)
++    {
++    case P_BANK:
++      {
++        struct dbuf_s buffer;
++
++        dbuf_init (&buffer, 128);
++
++        cp = get_pragma_token (cp, &token);
++
++        switch (token.type)
++          {
++          case TOKEN_EOL:
++            err = 1;
++            break;
++
++          case TOKEN_INT:
++            dbuf_printf (&buffer, "CODE_%d", token.val.int_val);
++            break;
++
++          default:
++            {
++              const char *str = get_pragma_string (&token);
++
++              dbuf_append_str (&buffer, (0 == strcmp ("BASE", str)) ? "HOME" : str);
++            }
++            break;
++          }
++
++        cp = get_pragma_token (cp, &token);
++        if (TOKEN_EOL != token.type)
++          {
++            err = 1;
++            break;
++          }
++
++        dbuf_c_str (&buffer);
++        options.code_seg = (char *) dbuf_detach (&buffer);
++      }
++      break;
++
++    case P_CODESEG:
++    case P_CONSTSEG:
++      {
++        char *segname;
++
++        cp = get_pragma_token (cp, &token);
++        if (token.type == TOKEN_EOL)
++          {
++            err = 1;
++            break;
++          }
++
++        segname = Safe_strdup (get_pragma_string (&token));
++
++        cp = get_pragma_token (cp, &token);
++        if (token.type != TOKEN_EOL)
++          {
++            Safe_free (segname);
++            err = 1;
++            break;
++          }
++
++        if (id == P_CODESEG)
++          {
++            if (options.code_seg)
++              Safe_free (options.code_seg);
++            options.code_seg = segname;
++          }
++        else
++          {
++            if (options.const_seg)
++              Safe_free (options.const_seg);
++            options.const_seg = segname;
++          }
++      }
++      break;
++
++    default:
++      processed = 0;
++      break;
++    }
++
++  get_pragma_token (cp, &token);
++
++  if (1 == err)
++    werror (W_BAD_PRAGMA_ARGUMENTS, name);
++
++  free_pragma_token (&token);
++  return processed;
++}
++
++static struct pragma_s pragma_tbl[] = {
++  {"bank", P_BANK, 0, do_pragma},
++  {"codeseg", P_CODESEG, 0, do_pragma},
++  {"constseg", P_CONSTSEG, 0, do_pragma},
++  {NULL, 0, 0, NULL},
++};
++
++static int
++_process_pragma (const char *s)
++{
++  return process_pragma_tbl (pragma_tbl, s);
++}
++
+ static bool
+ m6502_parseOptions (int *pargc, char **argv, int *i)
+ {
+-  return false;
++    if (argv[*i][0] == '-')
++    {
++        if (!strncmp (argv[*i], OPTION_BO, sizeof (OPTION_BO) - 1))
++        {
++            /* ROM bank */
++            int bank = getIntArg (OPTION_BO, argv, i, *pargc);
++            struct dbuf_s buffer;
++            dbuf_init (&buffer, 16);
++            dbuf_printf (&buffer, "CODE_%u", bank);
++            dbuf_c_str (&buffer);
++            options.code_seg = (char *) dbuf_detach (&buffer);
++            return true;
++        }
++    }
++    return false;
+ }
+ 
+ static void
+@@ -766,11 +905,11 @@
+     0,                          /* default ABI revision */
+     {                           /* stack information */
+       -1,                       /* stack grows down */
+-      0,                        /* bank_overhead (switch between register banks) */
++      3,                        /* bank_overhead (switch between register banks) */
+       6,                        /* isr overhead */
+       2,                        /* call overhead */
+       0,                        /* reent_overhead */
+-      0,                        /* banked_overhead (switch between code banks) */
++      3,                        /* banked_overhead (switch between code banks) */
+       1,                        /* sp points to next free stack location */
+     },
+     {
+@@ -818,7 +957,7 @@
+     0,                          /* genInitStartup */
+     m6502_reset_regparm,
+     m6502_regparm,
+-    NULL,                       /* process_pragma */
++    _process_pragma,            /* process_pragma */
+     NULL,                       /* getMangledFunctionName */
+     _hasNativeMulFor,           /* hasNativeMulFor */
+     hasExtBitOp,                /* hasExtBitOp */
+@@ -935,11 +1074,11 @@
+     0,                          // ABI revision
+     {
+       -1,                       /* direction (-1 = stack grows down) */
+-      0,                        /* bank_overhead (switch between register banks) */
++      3,                        /* bank_overhead (switch between register banks) */
+       4,                        /* isr_overhead */
+       2,                        /* call_overhead */
+       0,                        /* reent_overhead */
+-      0,                        /* banked_overhead (switch between code banks) */
++      3,                        /* banked_overhead (switch between code banks) */
+       1                         /* sp is offset by 1 from last item pushed */
+     },
+     {
+@@ -987,7 +1126,7 @@
+     0,                          /* genInitStartup */
+     m6502_reset_regparm,
+     m6502_regparm,
+-    0,                          /* process_pragma */
++    _process_pragma,            /* process_pragma */
+     NULL,                       /* getMangledFunctionName */
+     _hasNativeMulFor,           /* hasNativeMulFor */
+     hasExtBitOp,                /* hasExtBitOp */
+diff -rupN ../sdcc-code-14868_with_mos6502_underscored_segments/sdcc/src/SDCCglue.c ./sdcc/src/SDCCglue.c
+--- ../sdcc-code-14868_with_mos6502_underscored_segments/sdcc/src/SDCCglue.c	2024-05-28 17:29:28.755759700 +0100
++++ ./sdcc/src/SDCCglue.c	2024-05-28 20:24:49.135759700 +0100
+@@ -2164,7 +2164,7 @@ printPublics (FILE * afile)
+ 
+   for (sym = setFirstItem (publics); sym; sym = setNextItem (publics))
+     {
+-      if (TARGET_Z80_LIKE && IFFUNC_BANKED(sym->type))
++      if (IFFUNC_BANKED(sym->type))
+         {
+           /* TODO: use template for bank symbol generation */
+           sprintf (buffer, "b%s", sym->rname);

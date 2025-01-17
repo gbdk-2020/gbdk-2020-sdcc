@@ -1,0 +1,96 @@
+Index: sdcc/src/SDCC.lex
+===================================================================
+--- sdcc/src/SDCC.lex	(revision 15224)
++++ sdcc/src/SDCC.lex	(working copy)
+@@ -237,6 +237,7 @@
+ "__naked"               { count (); TKEYWORD (NAKED); }
+ "_JavaNative"           { count (); TKEYWORD (JAVANATIVE); }
+ "__overlay"             { count (); TKEYWORD (OVERLAY); }
++"__no_overlay_locals"   { count (); TKEYWORD (NO_OVERLAY_LOCALS); }
+ "__smallc"              { count (); TKEYWORD (SMALLC); }
+ "__raisonance"          { count (); TKEYWORD (RAISONANCE); }
+ "__iar"                 { count (); TKEYWORD (IAR); }
+Index: sdcc/src/SDCC.y
+===================================================================
+--- sdcc/src/SDCC.y	(revision 15224)
++++ sdcc/src/SDCC.y	(working copy)
+@@ -106,7 +106,7 @@
+ %token COMPLEX IMAGINARY
+ %token STRUCT UNION ENUM RANGE SD_FAR
+ %token CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
+-%token NAKED JAVANATIVE OVERLAY TRAP
++%token NAKED JAVANATIVE OVERLAY NO_OVERLAY_LOCALS TRAP
+ %token <yystr> STRING_LITERAL INLINEASM FUNC
+ %token IFX ADDRESS_OF GET_VALUE_AT_ADDRESS SET_VALUE_AT_ADDRESS SPIL UNSPIL GETABIT GETBYTE GETWORD
+ %token BITWISEAND UNARYMINUS IPUSH IPUSH_VALUE_AT_ADDRESS IPOP PCALL ENDFUNCTION JUMPTABLE
+@@ -2414,6 +2414,9 @@
+    |  OVERLAY        {  $$ = newLink (SPECIFIER);
+                         FUNC_ISOVERLAY($$)=1;
+                      }
++   |  NO_OVERLAY_LOCALS {  $$ = newLink (SPECIFIER);
++                        FUNC_ISNO_OVERLAY_LOCALS($$)=1;
++                     }
+    |  NONBANKED      {$$ = newLink (SPECIFIER);
+                         FUNC_NONBANKED($$) = 1;
+                         if (FUNC_BANKED($$)) {
+Index: sdcc/src/SDCCmem.c
+===================================================================
+--- sdcc/src/SDCCmem.c	(revision 15224)
++++ sdcc/src/SDCCmem.c	(working copy)
+@@ -1311,8 +1311,9 @@
+               if (ic->op == CALL)
+                 {
+                   sym_link *ftype = operandType(IC_LEFT(ic));
+-                  /* builtins only can use overlays */
+-                  if (!IFFUNC_ISBUILTIN(ftype)) return FALSE;
++                  /* builtins can use overlays. */
++                  /* and NO_OVERLAY_LOCALS functions can safely be ignored (they use their own memory) */
++                  if (!(IFFUNC_ISBUILTIN(ftype) || IFFUNC_ISNO_OVERLAY_LOCALS(ftype))) return FALSE;
+                 }
+               else if (ic->op == PCALL)
+                 {
+Index: sdcc/src/SDCCsymt.h
+===================================================================
+--- sdcc/src/SDCCsymt.h	(revision 15224)
++++ sdcc/src/SDCCsymt.h	(working copy)
+@@ -275,6 +275,7 @@
+     unsigned builtin;               /* is a builtin function                */
+     unsigned javaNative;            /* is a JavaNative Function (TININative ONLY) */
+     unsigned overlay;               /* force parameters & locals into overlay segment */
++    unsigned no_overlay_locals;     /* Function does NOT use compiler's overlay segment for local variables */
+     unsigned hasStackParms;         /* function has parameters on stack     */
+     bool preserved_regs[9];         /* Registers preserved by the function - may be an underestimate */
+     unsigned char z88dk_shortcall_rst;  /* Rst for a short call */
+@@ -456,6 +457,8 @@
+ #define IFFUNC_ISJAVANATIVE(x) (IS_FUNC(x) && FUNC_ISJAVANATIVE(x))
+ #define FUNC_ISOVERLAY(x) (x->funcAttrs.overlay)
+ #define IFFUNC_ISOVERLAY(x) (IS_FUNC(x) && FUNC_ISOVERLAY(x))
++#define FUNC_ISNO_OVERLAY_LOCALS(x) (x->funcAttrs.no_overlay_locals)
++#define IFFUNC_ISNO_OVERLAY_LOCALS(x) (IS_FUNC(x) && FUNC_ISNO_OVERLAY_LOCALS(x))
+ #define FUNC_ISSMALLC(x) (x->funcAttrs.smallc)
+ #define IFFUNC_ISSMALLC(x) (IS_FUNC(x) && FUNC_ISSMALLC(x))
+ #define FUNC_ISRAISONANCE(x) (x->funcAttrs.raisonance)
+Index: sdcc/src/mos6502/main.c
+===================================================================
+--- sdcc/src/mos6502/main.c	(revision 15224)
++++ sdcc/src/mos6502/main.c	(working copy)
+@@ -92,6 +92,7 @@
+   "xdata",
+   "far",
+   //  "overlay",
++  "no_overlay_locals",
+   //  "using",
+   //  "generic",
+   NULL
+Index: sdcc/src/reswords.gperf
+===================================================================
+--- sdcc/src/reswords.gperf	(revision 15224)
++++ sdcc/src/reswords.gperf	(working copy)
+@@ -58,6 +58,7 @@
+ near,		DATA,		1
+ pdata,		PDATA,		1
+ reentrant,	REENTRANT,	1
++no_overlay_locals,	NO_OVERLAY_LOCALS,	1
+ sfr,		SFR,		1
+ sbit,		SBIT,		1
+ sram,		XDATA,		1
