@@ -10,8 +10,8 @@ on:
   #   branches: [ develop ]
     inputs:
       sdcc_version_num:
-        description: 'SDCC Version Number (ex: 13911, 14089, 14228, 14581, 14635,14880)'
-        default: '14650'
+        description: 'SDCC Version Number (ex: 15224)'
+        default: '15224'
         required: true
         type: string
       sdcc_patch_file_url:
@@ -22,7 +22,8 @@ on:
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_nonbanked_v4_combined.diff.patch'
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_nonbanked_no_overlay_locals_v6_combined.diff.patch'
         # (14635) # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.3.0-nes_banked_nonbanked_no_overlay_locals_v7_combined.diff.patch'
-        default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.3-nes_banked_nonbanked_no_overlay_locals_v8_combined.patch'
+        # (14650) # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.3-nes_banked_nonbanked_no_overlay_locals_v8_combined.patch'
+        default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/sdcc_15224__gbdk_4.4.0_patches_v9-pre_individual.zip'
         type: string        
 jobs:
   build:
@@ -111,8 +112,9 @@ jobs:
             echo "Patch sdcc: ${{ inputs.sdcc_patch_file_url }}"
             # cd sdcc-${{ env.SDCC_VER }}/sdcc
             cd sdcc-${{ env.SDCC_VER }}
-            curl -Lo gbdk-sdcc-patch-file ${{ inputs.sdcc_patch_file_url }}
-            patch -p0 -f < gbdk-sdcc-patch-file
+            curl -Lo gbdk-sdcc-patch-files.zip ${{ inputs.sdcc_patch_file_url }}
+            unzip gbdk-sdcc-patch-file.zip
+            for file in $(ls -v *.patch); do echo "$file"; patch -p0 -f < "$file"; done
             # cd ../..
             cd ..
           fi   
