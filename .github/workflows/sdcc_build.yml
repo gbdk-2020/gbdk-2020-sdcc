@@ -112,7 +112,7 @@ jobs:
         if: (matrix.name == 'Linux-x64') || (matrix.name == 'Linux-arm64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
         run: |    
           # Try not to hammer the svn server too much at once, stagger matrix jobs a bit
-          sleep $((60 * ${{ strategy.job-index }} ))
+          sleep $((30 * ${{ strategy.job-index }} ))
           # Checkout SDCC source
           svn checkout -q -r ${{ env.SDCC_VER }} svn://svn.code.sf.net/p/sdcc/code/trunk sdcc-${{ env.SDCC_VER }}
           # Apply patch file to source of applicable
