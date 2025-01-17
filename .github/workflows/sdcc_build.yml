@@ -23,7 +23,7 @@ on:
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_nonbanked_no_overlay_locals_v6_combined.diff.patch'
         # (14635) # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.3.0-nes_banked_nonbanked_no_overlay_locals_v7_combined.diff.patch'
         # (14650) # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.3-nes_banked_nonbanked_no_overlay_locals_v8_combined.patch'
-        default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/sdcc_15224__gbdk_4.4.0_patches_v9-pre_individual.zip'
+        default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/sdcc_15224__gbdk_4.4.0_patches_v9_individual.zip'
         type: string        
 jobs:
   build:
