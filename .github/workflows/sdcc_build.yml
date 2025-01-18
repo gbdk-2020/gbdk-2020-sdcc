@@ -177,7 +177,7 @@ jobs:
           if [ "${{ matrix.name }}" = "MacOS-x64" ]; then
             # Special case - use sdcc official build of cc1 since it has static linkage for libisl, libzstd (had some trouble with that on this build)
             # this will untar into libexec/sdcc/cc1
-            curl -Lo macos-cc1.tar.gz https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/sdcc-extras/sdcc-4.3-macos-cc1-14110.tar.gz
+            curl -Lo macos-cc1.tar.gz https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/sdcc-extras/sdcc-4.5-macos-cc1-15224.tar.gz
             tar xvfz macos-cc1.tar.gz
           else
             mv bin/cc1 libexec/sdcc
