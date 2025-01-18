@@ -1,6 +1,6 @@
 Index: sdcc/sdas/linksrc/aslink.h
 ===================================================================
---- sdcc/sdas/linksrc/aslink.h	(revision 14868)
+--- sdcc/sdas/linksrc/aslink.h	(revision 15224)
 +++ sdcc/sdas/linksrc/aslink.h	(working copy)
 @@ -381,7 +381,17 @@
                                   */
@@ -39,7 +39,7 @@ Index: sdcc/sdas/linksrc/aslink.h
  extern  VOID            iramsav(void);
 Index: sdcc/sdas/linksrc/lkarea.c
 ===================================================================
---- sdcc/sdas/linksrc/lkarea.c	(revision 14868)
+--- sdcc/sdas/linksrc/lkarea.c	(revision 15224)
 +++ sdcc/sdas/linksrc/lkarea.c	(working copy)
 @@ -321,6 +321,8 @@
   *                                      area structure
@@ -92,7 +92,7 @@ Index: sdcc/sdas/linksrc/lkarea.c
                           * Absolute sections
 Index: sdcc/sdas/linksrc/lkdata.c
 ===================================================================
---- sdcc/sdas/linksrc/lkdata.c	(revision 14868)
+--- sdcc/sdas/linksrc/lkdata.c	(revision 15224)
 +++ sdcc/sdas/linksrc/lkdata.c	(working copy)
 @@ -84,6 +84,8 @@
                           */
@@ -114,7 +114,7 @@ Index: sdcc/sdas/linksrc/lkdata.c
  int     stacksize=0;    /*      JCF: Stack size
 Index: sdcc/sdas/linksrc/lkmain.c
 ===================================================================
---- sdcc/sdas/linksrc/lkmain.c	(revision 14868)
+--- sdcc/sdas/linksrc/lkmain.c	(revision 15224)
 +++ sdcc/sdas/linksrc/lkmain.c	(working copy)
 @@ -226,6 +226,10 @@
                                  /*
@@ -213,7 +213,7 @@ Index: sdcc/sdas/linksrc/lkmain.c
          "Map format:",
          "  -m   Map output generated as (out)file[.map]",
          "  -w   Wide listing format for map file",
-@@ -1741,6 +1796,7 @@
+@@ -1833,6 +1888,7 @@
          "Relocation:",
          "  -b   area base address = expression",
          "  -g   global symbol = expression",
@@ -223,7 +223,7 @@ Index: sdcc/sdas/linksrc/lkmain.c
          "  -w   Wide listing format for map file",
 Index: sdcc/sdas/linksrc/lkout.c
 ===================================================================
---- sdcc/sdas/linksrc/lkout.c	(revision 14868)
+--- sdcc/sdas/linksrc/lkout.c	(revision 15224)
 +++ sdcc/sdas/linksrc/lkout.c	(working copy)
 @@ -364,6 +364,8 @@
   *      global variables:
