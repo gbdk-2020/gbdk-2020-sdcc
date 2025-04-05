@@ -1,0 +1,21 @@
+Index: sdcc/sdas/linksrc/lkmain.c
+===================================================================
+--- sdcc/sdas/linksrc/lkmain.c	(revision 15224)
++++ sdcc/sdas/linksrc/lkmain.c	(working copy)
+@@ -578,12 +578,13 @@
+                         }
+                         else {
+                                 if (strcmp(optsdcc, &ip[1]) != 0) {
++                                        // Emit a warning when object O lines don't match instead of erroring out
+                                         fprintf(stderr,
+-                                                "?ASlink-Warning-Conflicting sdcc options:\n"
++                                                "?ASlink-Warning O Lines in linked objects do not match:\n"
+                                                 "   \"%s\" in module \"%s\" and\n"
+                                                 "   \"%s\" in module \"%s\".\n",
+                                                 optsdcc, optsdcc_module, &ip[1], hp->m_id);
+-                                        lkerr++;
++                                        // lkerr++;
+                                 }
+                         }
+                 }
+
