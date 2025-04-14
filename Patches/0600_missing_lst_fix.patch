@@ -7,8 +7,8 @@ Index: sdcc/sdas/linksrc/lkmain.c
          }
          if ((fp = fopen(afspec, frmt)) == NULL && strcmp(ft,"adb") != 0) { /* Do not complain for optional adb files */
 +            if(strcmp(ft,"lst") == 0) {
-+                /* For optional lst files, just print a warning and continue */
-+                fprintf(stderr, "?ASlink-Warning-<cannot %s> : \"%s\"\n", wf?"create":"open", afspec);
++                /* For optional lst files, continue without printing a warning */
++                /* fprintf(stderr, "?ASlink-Warning-<cannot %s> : \"%s\"\n", wf?"create":"open", afspec); */
 +            }
 +            else {
                  fprintf(stderr, "?ASlink-Error-<cannot %s> : \"%s\"\n", wf?"create":"open", afspec);
