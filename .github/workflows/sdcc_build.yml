@@ -31,13 +31,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             name: Linux-x64
           - os: ubuntu-22.04-arm  
             name: Linux-arm64
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             name: Win32-On-Linux
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             name: Win64-On-Linux
           - os: macos-13
             name: MacOS-x64
