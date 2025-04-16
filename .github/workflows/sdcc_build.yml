@@ -10,8 +10,8 @@ on:
   #   branches: [ develop ]
     inputs:
       sdcc_version_num:
-        description: 'SDCC Version Number (ex: 15242)'
-        default: '15242'
+        description: 'SDCC Version Number (ex: 15267)'
+        default: '15267'
         required: true
         type: string
       sdcc_patch_file_url:
