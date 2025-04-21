@@ -199,8 +199,8 @@ jobs:
           --enable-sm83-port --enable-z80-port  --enable-mos6502-port  --disable-r800-port  --disable-mcs51-port   --disable-z180-port   --disable-r2k-port   --disable-r2ka-port   --disable-r3ka-port   --disable-tlcs90-port   --disable-ez80_z80-port   --disable-z80n-port   --disable-ds390-port   --disable-ds400-port   --disable-pic14-port   --disable-pic16-port   --disable-hc08-port   --disable-s08-port   --disable-stm8-port   --disable-pdk13-port   --disable-pdk14-port   --disable-pdk15-port  --disable-f8-port  --disable-ucsim   --disable-doc   --disable-device-lib   --host=i686-w64-mingw32
           make
           # Download and install Windows 32 bit dependency dlls
-          wget https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/sdcc-extras/sdcc-4.3-win32-dlls.zip
-          unzip sdcc-4.3-win32-dlls.zip
+          wget https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/sdcc-extras/sdcc-4.5-win32-dlls.zip
+          unzip sdcc-4.5-win32-dlls.zip
           ls -la bin
           cp -f src/sdcc.exe bin
           cp -f support/sdbinutils/binutils/sdar.exe bin
@@ -239,8 +239,8 @@ jobs:
           # New sdcc build no longer copies some binaries to bin
           # find *
           # Download and install Windows 64 bit dependency dlls
-          wget https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/sdcc-extras/sdcc-4.3-win64-dlls.zip
-          unzip sdcc-4.3-win64-dlls.zip
+          wget https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/sdcc-extras/sdcc-4.5-win64-dlls.zip
+          unzip sdcc-4.5-win64-dlls.zip
           ls -la bin
           cp -f src/sdcc.exe bin
           cp -f support/sdbinutils/binutils/sdar.exe bin
