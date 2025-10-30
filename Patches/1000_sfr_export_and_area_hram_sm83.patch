@@ -1,0 +1,36 @@
+Index: sdcc/src/SDCCglue.c
+===================================================================
+--- sdcc/src/SDCCglue.c	(revision 15614)
++++ sdcc/src/SDCCglue.c	(working copy)
+@@ -168,7 +168,7 @@
+       else
+         dbuf_tprintf (&map->oBuf, "\t!area\n", map->sname);
+ 
+-      if (map->regsp)
++      if ((map->regsp) && (!TARGET_IS_SM83))
+         dbuf_tprintf (&map->oBuf, "\t!org\n", 0);
+     }
+ 
+@@ -2025,7 +2025,7 @@
+ emitMaps (void)
+ {
+   namedspacemap *nm;
+-  int publicsfr = TARGET_IS_MCS51 || TARGET_PDK_LIKE;      /* Ideally, this should be true for all  */
++  int publicsfr = TARGET_IS_SM83 || TARGET_IS_MCS51 || TARGET_PDK_LIKE;      /* Ideally, this should be true for all  */
+                                                            /* ports but let's be conservative - EEP */
+ 
+ 
+Index: sdcc/src/z80/main.c
+===================================================================
+--- sdcc/src/z80/main.c	(revision 15614)
++++ sdcc/src/z80/main.c	(working copy)
+@@ -1832,7 +1841,7 @@
+     NULL,                       /* pdata */
+     NULL,                       /* xdata */
+     NULL,                       /* bit */
+-    "RSEG",
++    "HRAM",
+     "GSINIT",
+     NULL,                       /* overlay */
+     "GSFINAL",
+ 
