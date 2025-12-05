@@ -15,7 +15,7 @@ on:
         required: true
         type: string
       sdcc_patch_file_url:
-        description: 'url for sdcc patch file ("none" without quotes for none) (-p0, sdcc dir as root)'
+        description: 'url for sdcc patch file ("none" without quotes for none, "repo" to use patches/ dir in repo) (-p0, sdcc dir as root)'
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.1.0-sdldz80-sms-virt-addr.patch'
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_v2_merged-patches'
         # default: 'https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/patches/gbdk-4.2-nes_banked_nonbanked_v3_combined-patches'
@@ -100,6 +100,13 @@ jobs:
           sudo BINARY_PATH=/usr/i686-w64-mingw32/bin INCLUDE_PATH=/usr/i686-w64-mingw32/include LIBRARY_PATH=/usr/i686-w64-mingw32/lib make -f win32/Makefile.gcc install
           cd ..
 
+      # ==== Check out gbdk-2020-sdcc dir ====
+      - name: Check out gbdk-2020-sdcc
+        uses: actions/checkout@v4
+        with:
+          path: gbdk-2020-sdcc
+          submodules: false
+
       # ==== Download SDCC sources ====
       - name: Download SDCC Sources
         if: (matrix.name == 'Linux-x64') || (matrix.name == 'Linux-arm64') || (matrix.name == 'MacOS-x64') || (matrix.name == 'MacOS-arm64') || (matrix.name == 'Win32-On-Linux') || (matrix.name == 'Win64-On-Linux')
@@ -111,14 +118,18 @@ jobs:
           # Apply patch file to source of applicable
           if [ "${{ inputs.sdcc_patch_file_url }}" = "none" ]; then
             echo "Patch sdcc: no file specified"
+          elif [ "${{ inputs.sdcc_patch_file_url }}" = "repo" ]; then
+            # Copy patches from gbdk-2020-sdcc repo into sdcc folder and apply them
+            cp gbdk-2020-sdcc/Patches/* sdcc-${{ env.SDCC_VER }}
+            cd sdcc-${{ env.SDCC_VER }}
+            for file in $(ls -v *.patch); do echo "$file"; patch -p0 -f < "$file"; done
+            cd ..         
           else
             echo "Patch sdcc: ${{ inputs.sdcc_patch_file_url }}"
-            # cd sdcc-${{ env.SDCC_VER }}/sdcc
             cd sdcc-${{ env.SDCC_VER }}
             curl -Lo gbdk-sdcc-patch-files.zip ${{ inputs.sdcc_patch_file_url }}
             unzip gbdk-sdcc-patch-files.zip
             for file in $(ls -v *.patch); do echo "$file"; patch -p0 -f < "$file"; done
-            # cd ../..
             cd ..
           fi   
 

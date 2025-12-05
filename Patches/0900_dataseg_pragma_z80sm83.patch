@@ -1,0 +1,99 @@
+Index: sdcc/src/SDCC.lex
+===================================================================
+--- sdcc/src/SDCC.lex	(revision 15224)
++++ sdcc/src/SDCC.lex	(working copy)
+@@ -841,6 +841,7 @@
+    P_STD_SDCC2Y,
+    P_CODESEG,
+-   P_CONSTSEG
++   P_CONSTSEG,
++   P_DATASEG
+ };
+ 
+ 
+@@ -1312,6 +1313,7 @@
+       options.std_sdcc = 1;
+       break;
+ 
++    case P_DATASEG:
+     case P_CODESEG:
+     case P_CONSTSEG:
+       {
+@@ -1325,7 +1327,10 @@
+           }
+ 
+         dbuf_init(&segname, 16);
+-        dbuf_printf(&segname, "%-8s(CODE)", get_pragma_string(&token));
++        if (id == P_DATASEG)
++          dbuf_printf(&segname, "%-8s(DATA)", get_pragma_string(&token));
++        else
++          dbuf_printf(&segname, "%-8s(CODE)", get_pragma_string(&token));
+ 
+         cp = get_pragma_token(cp, &token);
+         if (token.type != TOKEN_EOL)
+@@ -1335,7 +1340,9 @@
+             break;
+           }
+ 
+-        if (id == P_CODESEG)
++        if (id == P_DATASEG)
++          options.data_seg = dbuf_detach(&segname);
++        else if (id == P_CODESEG)
+           options.code_seg = dbuf_detach(&segname);
+         else
+           options.const_seg = dbuf_detach(&segname);
+@@ -1388,6 +1395,7 @@
+   { "std_sdcc2y",        P_STD_SDCC2Y,      0, doPragma },
+   { "codeseg",           P_CODESEG,         0, doPragma },
+   { "constseg",          P_CONSTSEG,        0, doPragma },
++  { "dataseg",           P_DATASEG,         0, doPragma },
+   { NULL,                0,                 0, NULL },
+ };
+ 
+Index: sdcc/src/z80/main.c
+===================================================================
+--- sdcc/src/z80/main.c	(revision 15224)
++++ sdcc/src/z80/main.c	(working copy)
+@@ -374,6 +374,7 @@
+   P_PORTMODE,
+   P_CODESEG,
+   P_CONSTSEG,
++  P_DATASEG,
+ };
+ 
+ static int
+@@ -489,6 +490,7 @@
+       }
+       break;
+ 
++    case P_DATASEG:
+     case P_CODESEG:
+     case P_CONSTSEG:
+       {
+@@ -511,8 +513,14 @@
+             break;
+           }
+ 
+-        if (id == P_CODESEG)
++        if (id == P_DATASEG)
+           {
++            if (options.data_seg)
++              Safe_free (options.data_seg);
++            options.data_seg = segname;
++          }
++        else if (id == P_CODESEG)
++          {
+             if (options.code_seg)
+               Safe_free (options.code_seg);
+             options.code_seg = segname;
+@@ -543,8 +551,9 @@
+ static struct pragma_s pragma_tbl[] = {
+   {"bank", P_BANK, 0, do_pragma},
+   {"portmode", P_PORTMODE, 0, do_pragma},
+-  {"codeseg", P_CODESEG, 0, do_pragma},
++  {"codeseg",  P_CODESEG, 0, do_pragma},
+   {"constseg", P_CONSTSEG, 0, do_pragma},
++  {"dataseg",  P_DATASEG, 0, do_pragma},
+   {NULL, 0, 0, NULL},
+ };
+ 
