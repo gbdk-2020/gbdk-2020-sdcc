@@ -1,0 +1,30 @@
+Index: sdcc/src/z80/peeph-sm83.def
+===================================================================
+--- sdcc/src/z80/peeph-sm83.def	(revision 15267)
++++ sdcc/src/z80/peeph-sm83.def	(working copy)
+@@ -318,15 +318,16 @@
+ 	push	af
+ } if operandsLiteral(%2), immdInRange(0x00A0 0x00A0 '+' %2 0 %x3), notUsed(%1 'af')
+ 
+-replace {
+-	ld	%1, #%2
+-	push	%1
+-} by {
+-	; sm83 peephole 18e pushed #%2 faster
+-	xor	a, a
+-	scf
+-	push	af
+-} if operandsLiteral(%2), immdInRange(0x00D0 0x00D0 '+' %2 0 %x3), notUsed(%1 'af')
++// Removed due to bugs. Produces incorrect code for some code with "(13 << 4)"
++// replace {
++// 	ld	%1, #%2
++// 	push	%1
++// } by {
++// 	; sm83 peephole 18e pushed #%2 faster
++// 	xor	a, a
++// 	scf
++// 	push	af
++// } if operandsLiteral(%2), immdInRange(0x00D0 0x00D0 '+' %2 0 %x3), notUsed(%1 'af')
+ 
+ replace {
+ 	ld	%1, #%2
