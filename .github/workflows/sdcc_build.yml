@@ -9,6 +9,11 @@ on:
   # pull_request:
   #   branches: [ develop ]
     inputs:
+      sdcc_branch:
+        description: 'SDCC Branch (ex: "trunk", or "branches/next")'
+        default: 'trunk'
+        required: true
+        type: string
       sdcc_version_num:
         description: 'SDCC Version Number (ex: 16561)'
         default: '16561'
@@ -53,6 +58,7 @@ jobs:
         shell: bash
         run: |
           echo "SDCC_VER=${{ inputs.sdcc_version_num }}" >> $GITHUB_ENV
+          echo "SDCC_BRANCH=${{ inputs.sdcc_branch }}" >> $GITHUB_ENV
           echo "BUILD_PACKAGE_FILENAME=sdcc-${{ inputs.sdcc_version_num }}-${{ matrix.name }}.tar.gz" >> $GITHUB_ENV
 
       # ==== Install Dependencies ====
@@ -115,7 +121,7 @@ jobs:
           # Try not to hammer the svn server too much at once, stagger matrix jobs a bit
           sleep $((30 * ${{ strategy.job-index }} ))
           # Checkout SDCC source
-          svn checkout -q -r ${{ env.SDCC_VER }} svn://svn.code.sf.net/p/sdcc/code/trunk sdcc-${{ env.SDCC_VER }}
+          svn checkout -q -r ${{ env.SDCC_VER }} svn://svn.code.sf.net/p/sdcc/code/${{ env.SDCC_BRANCH }} sdcc-${{ env.SDCC_VER }}
           # Apply patch file to source of applicable
           if [ "${{ inputs.sdcc_patch_file_url }}" = "none" ]; then
             echo "Patch sdcc: no file specified"
