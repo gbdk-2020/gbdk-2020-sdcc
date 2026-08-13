@@ -93,7 +93,9 @@ jobs:
           sudo ln -s /usr/include/boost/ /usr/x86_64-w64-mingw32/include
           sudo ln -s /usr/include/boost/ /usr/i686-w64-mingw32/include
           # Zlib missing for mingw 64 bit (might be an easier way than this)
-          wget https://www.zlib.net/fossils/zlib-1.2.13.tar.gz -O- | tar xfz -
+          # wget https://www.zlib.net/fossils/zlib-1.2.13.tar.gz -O- | tar xfz -
+          # zlib.net is periodically offline, use local mirror
+          wget https://github.com/gbdk-2020/gbdk-2020-sdcc/releases/download/sdcc-extras/for-wincross-zlib-1.2.13.tar.gz -O- | tar xfz -
           cd zlib*
           make -f Makefile.in clean
           # zlib 'configure' script had some problem, use win32/Makefile.gcc directly
