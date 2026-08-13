@@ -15,8 +15,8 @@ on:
         required: true
         type: string
       sdcc_version_num:
-        description: 'SDCC Version Number (ex: 16561)'
-        default: '16561'
+        description: 'SDCC Version Number (ex: 16705)'
+        default: '16705'
         required: true
         type: string
       sdcc_patch_file_url:
