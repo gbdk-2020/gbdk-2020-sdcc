@@ -1,0 +1,13 @@
+Index: sdcc/src/z80/gen.c
+===================================================================
+--- sdcc/src/z80/gen.c	(revision 16705)
++++ sdcc/src/z80/gen.c	(working copy)
+@@ -16441,7 +16441,7 @@
+   wassert (blen <= 8);
+ 
+   AccRol (8 - bstr);
+-  unpackMaskA (!SPEC_USIGN (etype), blen, false);
++  unpackMaskA (!SPEC_USIGN (etype) && !IS_BOOLEAN (etype), blen, false);
+   cheapMove (result->aop, offset++, ASMOP_A, 0, true);
+ 
+   if (offset < rsize)
