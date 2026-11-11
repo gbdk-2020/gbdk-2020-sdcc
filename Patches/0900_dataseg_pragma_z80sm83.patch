@@ -1,8 +1,8 @@
 Index: sdcc/src/SDCC.lex
 ===================================================================
---- sdcc/src/SDCC.lex	(revision 15614)
+--- sdcc/src/SDCC.lex	(revision 16561)
 +++ sdcc/src/SDCC.lex	(working copy)
-@@ -846,7 +846,8 @@
+@@ -728,7 +728,8 @@
     P_STD_SDCC23,
     P_STD_SDCC2Y,
     P_CODESEG,
@@ -12,7 +12,7 @@ Index: sdcc/src/SDCC.lex
  };
  
  
-@@ -1336,6 +1337,7 @@
+@@ -1218,6 +1219,7 @@
        options.std_sdcc = 1;
        break;
  
@@ -20,7 +20,7 @@ Index: sdcc/src/SDCC.lex
      case P_CODESEG:
      case P_CONSTSEG:
        {
-@@ -1349,7 +1351,10 @@
+@@ -1231,7 +1233,10 @@
            }
  
          dbuf_init(&segname, 16);
@@ -32,7 +32,7 @@ Index: sdcc/src/SDCC.lex
  
          cp = get_pragma_token(cp, &token);
          if (token.type != TOKEN_EOL)
-@@ -1359,7 +1364,9 @@
+@@ -1241,7 +1246,9 @@
              break;
            }
  
@@ -43,7 +43,7 @@ Index: sdcc/src/SDCC.lex
            options.code_seg = dbuf_detach(&segname);
          else
            options.const_seg = dbuf_detach(&segname);
-@@ -1413,6 +1420,7 @@
+@@ -1295,6 +1302,7 @@
    { "std_sdcc2y",          P_STD_SDCC2Y,          0, doPragma },
    { "codeseg",             P_CODESEG,             0, doPragma },
    { "constseg",            P_CONSTSEG,            0, doPragma },
@@ -53,9 +53,9 @@ Index: sdcc/src/SDCC.lex
  
 Index: sdcc/src/z80/main.c
 ===================================================================
---- sdcc/src/z80/main.c	(revision 15614)
+--- sdcc/src/z80/main.c	(revision 16561)
 +++ sdcc/src/z80/main.c	(working copy)
-@@ -374,6 +374,7 @@
+@@ -476,6 +476,7 @@
    P_PORTMODE,
    P_CODESEG,
    P_CONSTSEG,
@@ -63,7 +63,7 @@ Index: sdcc/src/z80/main.c
  };
  
  static int
-@@ -489,6 +490,7 @@
+@@ -591,6 +592,7 @@
        }
        break;
  
@@ -71,7 +71,7 @@ Index: sdcc/src/z80/main.c
      case P_CODESEG:
      case P_CONSTSEG:
        {
-@@ -511,8 +513,14 @@
+@@ -613,8 +615,14 @@
              break;
            }
  
@@ -87,7 +87,7 @@ Index: sdcc/src/z80/main.c
              if (options.code_seg)
                Safe_free (options.code_seg);
              options.code_seg = segname;
-@@ -543,8 +551,9 @@
+@@ -645,8 +653,9 @@
  static struct pragma_s pragma_tbl[] = {
    {"bank", P_BANK, 0, do_pragma},
    {"portmode", P_PORTMODE, 0, do_pragma},

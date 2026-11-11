@@ -1,21 +1,22 @@
-Index: sdcc/src/mos6502/gen.h
+Index: sdcc/src/SDCCglue.c
 ===================================================================
---- sdcc/src/mos6502/gen.h	(revision 15614)
-+++ sdcc/src/mos6502/gen.h	(working copy)
-@@ -130,6 +130,7 @@
-   int lastflag;
-   struct attr_t tempAttr[NUM_TEMP_REGS];
-   struct attr_t DPTRAttr[2];
-+  bool in_home;
- };
+--- sdcc/src/SDCCglue.c	(revision 16561)
++++ sdcc/src/SDCCglue.c	(working copy)
+@@ -2143,7 +2143,7 @@
  
- // globals
+   for (sym = setFirstItem (publics); sym; sym = setNextItem (publics))
+     {
+-      if (TARGET_Z80_LIKE && IFFUNC_BANKED(sym->type))
++      if (IFFUNC_BANKED(sym->type))
+         {
+           /* TODO: use template for bank symbol generation */
+           sprintf (buffer, "b%s", sym->rname);
 Index: sdcc/src/mos6502/gen.c
 ===================================================================
---- sdcc/src/mos6502/gen.c	(revision 15614)
+--- sdcc/src/mos6502/gen.c	(revision 16561)
 +++ sdcc/src/mos6502/gen.c	(working copy)
-@@ -284,6 +284,33 @@
-   _S.lastflag=reg_idx;
+@@ -293,6 +293,33 @@
+   return _S.tempOfs-1;
  }
  
 +/* Duplicated from z80/gen.c */
@@ -48,7 +49,7 @@ Index: sdcc/src/mos6502/gen.c
  /**************************************************************************
   * Returns the cycle count for the instruction
   *
-@@ -4447,6 +4474,69 @@
+@@ -4493,6 +4520,69 @@
      }
  }
  
@@ -118,12 +119,12 @@ Index: sdcc/src/mos6502/gen.c
  /**************************************************************************
   * genCall - generates a call statement
   *************************************************************************/
-@@ -4493,8 +4583,18 @@
+@@ -4540,8 +4630,18 @@
      {
        bool jump = (!ic->parmBytes && IFFUNC_ISNORETURN (OP_SYMBOL (left)->type));
  
--      emit6502op (jump ? "jmp" : "jsr", "%s", (OP_SYMBOL (left)->rname[0] ?
--					       OP_SYMBOL (left)->rname : OP_SYMBOL (left)->name));
+-      m6502_emitOp (jump ? "jmp" : "jsr", "%s", (OP_SYMBOL (left)->rname[0] ?
+-						 OP_SYMBOL (left)->rname : OP_SYMBOL (left)->name));
 +      if (IFFUNC_ISBANKEDCALL (dtype) && !jump)
 +        {
 +          char *name = OP_SYMBOL (IC_LEFT (ic))->rname[0] ? OP_SYMBOL (IC_LEFT (ic))->rname : OP_SYMBOL (IC_LEFT (ic))->name;
@@ -133,24 +134,24 @@ Index: sdcc/src/mos6502/gen.c
 +        }
 +      else
 +        {
-+          emit6502op (jump ? "jmp" : "jsr", "%s", (OP_SYMBOL (left)->rname[0] ?
++          m6502_emitOp (jump ? "jmp" : "jsr", "%s", (OP_SYMBOL (left)->rname[0] ?
 +                                  OP_SYMBOL (left)->rname : OP_SYMBOL (left)->name));
 +        }
      }
  
    m6502_dirtyAllRegs ();
-@@ -4683,6 +4783,8 @@
+@@ -4727,6 +4827,8 @@
    int stackAdjust = sym->stack;
-   //  int accIsFree = sym->recvSize == 0;
+   int recvSize = 0;
  
 +  setArea (IFFUNC_NONBANKED (sym->type));
 +
    /* create the function header */
-   emitComment (ALWAYS, "-----------------------------------------");
-   emitComment (ALWAYS, " function %s", sym->name);
-@@ -4690,6 +4792,20 @@
-   emitComment (ALWAYS, m6502_assignment_optimal ? "Register assignment is optimal." : "Register assignment might be sub-optimal.");
-   emitComment (ALWAYS, "Stack space usage: %d bytes.", sym->stack);
+   m6502_emitComment (ALWAYS, "-----------------------------------------");
+   m6502_emitComment (ALWAYS, " function %s", sym->name);
+@@ -4750,6 +4852,20 @@
+ 
+   m6502_emitComment (ALWAYS, "%s - rcv size = %d", __func__, recvSize);
  
 +  if (IFFUNC_BANKED (sym->type))
 +    {
@@ -169,7 +170,7 @@ Index: sdcc/src/mos6502/gen.c
    emitcode ("", "%s:", sym->rname);
    genLine.lineCurr->isLabel = 1;
    ftype = operandType (IC_LEFT (ic));
-@@ -8682,6 +8798,11 @@
+@@ -8839,6 +8955,11 @@
    if (!options.nopeep)
      peepHole (&genLine.lineHead);
  
@@ -181,9 +182,21 @@ Index: sdcc/src/mos6502/gen.c
    /* now do the actual printing */
    printLine (genLine.lineHead, codeOutBuf);
  
+Index: sdcc/src/mos6502/gen.h
+===================================================================
+--- sdcc/src/mos6502/gen.h	(revision 16561)
++++ sdcc/src/mos6502/gen.h	(working copy)
+@@ -132,6 +132,7 @@
+   int lastflag;
+   struct attr_t tempAttr[NUM_TEMP_REGS];
+   struct attr_t DPTRAttr[2];
++  bool in_home;
+ };
+ 
+ struct binst_t
 Index: sdcc/src/mos6502/main.c
 ===================================================================
---- sdcc/src/mos6502/main.c	(revision 15614)
+--- sdcc/src/mos6502/main.c	(revision 16561)
 +++ sdcc/src/mos6502/main.c	(working copy)
 @@ -30,6 +30,7 @@
  #include "m6502.h"
@@ -350,7 +363,7 @@ Index: sdcc/src/mos6502/main.c
  }
  
  static void
-@@ -768,11 +907,11 @@
+@@ -757,11 +896,11 @@
      0,                          /* default ABI revision */
      {                           /* stack information */
        -1,                       /* stack grows down */
@@ -364,7 +377,7 @@ Index: sdcc/src/mos6502/main.c
        1,                        /* sp points to next free stack location */
      },
      {
-@@ -820,7 +959,7 @@
+@@ -809,7 +948,7 @@
      0,                          /* genInitStartup */
      m6502_reset_regparm,
      m6502_regparm,
@@ -373,7 +386,7 @@ Index: sdcc/src/mos6502/main.c
      NULL,                       /* getMangledFunctionName */
      _hasNativeMulFor,           /* hasNativeMulFor */
      hasExtBitOp,                /* hasExtBitOp */
-@@ -937,11 +1076,11 @@
+@@ -929,11 +1068,11 @@
      0,                          // ABI revision
      {
        -1,                       /* direction (-1 = stack grows down) */
@@ -387,7 +400,7 @@ Index: sdcc/src/mos6502/main.c
        1                         /* sp is offset by 1 from last item pushed */
      },
      {
-@@ -989,7 +1128,7 @@
+@@ -981,7 +1120,7 @@
      0,                          /* genInitStartup */
      m6502_reset_regparm,
      m6502_regparm,
@@ -396,16 +409,3 @@ Index: sdcc/src/mos6502/main.c
      NULL,                       /* getMangledFunctionName */
      _hasNativeMulFor,           /* hasNativeMulFor */
      hasExtBitOp,                /* hasExtBitOp */
-Index: sdcc/src/SDCCglue.c
-===================================================================
---- sdcc/src/SDCCglue.c	(revision 15614)
-+++ sdcc/src/SDCCglue.c	(working copy)
-@@ -2168,7 +2168,7 @@
- 
-   for (sym = setFirstItem (publics); sym; sym = setNextItem (publics))
-     {
--      if (TARGET_Z80_LIKE && IFFUNC_BANKED(sym->type))
-+      if (IFFUNC_BANKED(sym->type))
-         {
-           /* TODO: use template for bank symbol generation */
-           sprintf (buffer, "b%s", sym->rname);

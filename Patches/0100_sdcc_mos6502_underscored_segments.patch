@@ -1,15 +1,15 @@
 Index: sdcc/device/lib/mos6502/__sdcc_indirect_jsr.s
 ===================================================================
---- sdcc/device/lib/mos6502/__sdcc_indirect_jsr.s	(revision 15614)
+--- sdcc/device/lib/mos6502/__sdcc_indirect_jsr.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/__sdcc_indirect_jsr.s	(working copy)
 @@ -1,3 +1,3 @@
 -.area CODE
 +.area _CODE
  __sdcc_indirect_jsr::
- 	jmp	[REGTEMP]
+ 	jmp	[DPTR]
 Index: sdcc/device/lib/mos6502/__sdcc_regs.s
 ===================================================================
---- sdcc/device/lib/mos6502/__sdcc_regs.s	(revision 15614)
+--- sdcc/device/lib/mos6502/__sdcc_regs.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/__sdcc_regs.s	(working copy)
 @@ -6,7 +6,7 @@
  
@@ -20,9 +20,43 @@ Index: sdcc/device/lib/mos6502/__sdcc_regs.s
  REGTEMP::
  ___SDCC_m6502_ret0::
          .ds 1
+Index: sdcc/device/lib/mos6502/__stdc_bit_width.s
+===================================================================
+--- sdcc/device/lib/mos6502/__stdc_bit_width.s	(revision 16561)
++++ sdcc/device/lib/mos6502/__stdc_bit_width.s	(working copy)
+@@ -44,7 +44,7 @@
+ ;--------------------------------------------------------
+ ; code
+ ;--------------------------------------------------------
+-	.area CODE
++	.area _CODE
+ 
+ ___stdc_bit_width:
+ 	ldx #0x07
+Index: sdcc/device/lib/mos6502/__stdc_count_ones.s
+===================================================================
+--- sdcc/device/lib/mos6502/__stdc_count_ones.s	(revision 16561)
++++ sdcc/device/lib/mos6502/__stdc_count_ones.s	(working copy)
+@@ -44,7 +44,7 @@
+ ;--------------------------------------------------------
+ ; code
+ ;--------------------------------------------------------
+-	.area CODE
++	.area _CODE
+ 
+ ___stdc_count_ones:
+ 	ldx #0x07
+@@ -88,6 +88,6 @@
+ nextb:
+     dex
+     bpl bloop
+-    
++
+ 	tya
+ 	rts
 Index: sdcc/device/lib/mos6502/_divsint.s
 ===================================================================
---- sdcc/device/lib/mos6502/_divsint.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_divsint.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_divsint.s	(working copy)
 @@ -47,7 +47,7 @@
  ;--------------------------------------------------------
@@ -35,7 +69,7 @@ Index: sdcc/device/lib/mos6502/_divsint.s
  	jsr	___sdivmod16
 Index: sdcc/device/lib/mos6502/_divslong.s
 ===================================================================
---- sdcc/device/lib/mos6502/_divslong.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_divslong.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_divslong.s	(working copy)
 @@ -50,7 +50,7 @@
  ;--------------------------------------------------------
@@ -43,12 +77,12 @@ Index: sdcc/device/lib/mos6502/_divslong.s
  ;--------------------------------------------------------
 -	.area CODE
 +	.area _CODE
+ 
  __divslong:
  	jsr	___sdivmod32
- 	lda	*s1
 Index: sdcc/device/lib/mos6502/_divuchar.s
 ===================================================================
---- sdcc/device/lib/mos6502/_divuchar.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_divuchar.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_divuchar.s	(working copy)
 @@ -45,7 +45,7 @@
  ;--------------------------------------------------------
@@ -56,12 +90,12 @@ Index: sdcc/device/lib/mos6502/_divuchar.s
  ;--------------------------------------------------------
 -	.area CODE
 +	.area _CODE
+ 
  __divuchar:
  	stx	*__divuint_PARM_2
- 	ldx	#0x00
 Index: sdcc/device/lib/mos6502/_divuint.s
 ===================================================================
---- sdcc/device/lib/mos6502/_divuint.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_divuint.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_divuint.s	(working copy)
 @@ -63,7 +63,7 @@
  ;--------------------------------------------------------
@@ -74,7 +108,7 @@ Index: sdcc/device/lib/mos6502/_divuint.s
  	jsr	___udivmod16
 Index: sdcc/device/lib/mos6502/_divulong.s
 ===================================================================
---- sdcc/device/lib/mos6502/_divulong.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_divulong.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_divulong.s	(working copy)
 @@ -75,7 +75,7 @@
  ;--------------------------------------------------------
@@ -87,7 +121,7 @@ Index: sdcc/device/lib/mos6502/_divulong.s
  	jsr	___udivmod32
 Index: sdcc/device/lib/mos6502/_floatlib.s
 ===================================================================
---- sdcc/device/lib/mos6502/_floatlib.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_floatlib.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_floatlib.s	(working copy)
 @@ -84,7 +84,7 @@
  ;--------------------------------------------------------
@@ -100,7 +134,7 @@ Index: sdcc/device/lib/mos6502/_floatlib.s
  	lda	*(_float_PARM_2 + 2) ; get exp2
 Index: sdcc/device/lib/mos6502/_fsadd.s
 ===================================================================
---- sdcc/device/lib/mos6502/_fsadd.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_fsadd.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_fsadd.s	(working copy)
 @@ -36,7 +36,7 @@
  ;--------------------------------------------------------
@@ -111,18 +145,9 @@ Index: sdcc/device/lib/mos6502/_fsadd.s
  
  ;--------------------------------------------------------
  ; overlayable items in ram
-@@ -60,7 +60,7 @@
- ;--------------------------------------------------------
- ; code
- ;--------------------------------------------------------
--	.area CODE
-+	.area _CODE
- ;------------------------------------------------------------
- 
- ___fsadd:
 Index: sdcc/device/lib/mos6502/_fslt.s
 ===================================================================
---- sdcc/device/lib/mos6502/_fslt.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_fslt.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_fslt.s	(working copy)
 @@ -48,7 +48,7 @@
  ;--------------------------------------------------------
@@ -135,7 +160,7 @@ Index: sdcc/device/lib/mos6502/_fslt.s
  ___fslt:
 Index: sdcc/device/lib/mos6502/_fsmul.s
 ===================================================================
---- sdcc/device/lib/mos6502/_fsmul.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_fsmul.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_fsmul.s	(working copy)
 @@ -49,7 +49,7 @@
  ;--------------------------------------------------------
@@ -148,7 +173,7 @@ Index: sdcc/device/lib/mos6502/_fsmul.s
  ; check if PARM_1 is zero
 Index: sdcc/device/lib/mos6502/_fssub.s
 ===================================================================
---- sdcc/device/lib/mos6502/_fssub.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_fssub.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_fssub.s	(working copy)
 @@ -35,7 +35,7 @@
  
@@ -161,7 +186,7 @@ Index: sdcc/device/lib/mos6502/_fssub.s
  ___fssub:
 Index: sdcc/device/lib/mos6502/_memcmp.s
 ===================================================================
---- sdcc/device/lib/mos6502/_memcmp.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_memcmp.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_memcmp.s	(working copy)
 @@ -56,7 +56,7 @@
  ;--------------------------------------------------------
@@ -174,7 +199,7 @@ Index: sdcc/device/lib/mos6502/_memcmp.s
  ; int memcmp (int *s1, int *s2, int count)
 Index: sdcc/device/lib/mos6502/_memset.s
 ===================================================================
---- sdcc/device/lib/mos6502/_memset.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_memset.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_memset.s	(working copy)
 @@ -57,7 +57,7 @@
  ;--------------------------------------------------------
@@ -184,10 +209,10 @@ Index: sdcc/device/lib/mos6502/_memset.s
 +	.area _CODE
  
  _memset:
- 	sta	*save+0
+ 	sta	*dst+0
 Index: sdcc/device/lib/mos6502/_modsint.s
 ===================================================================
---- sdcc/device/lib/mos6502/_modsint.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_modsint.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_modsint.s	(working copy)
 @@ -46,7 +46,7 @@
  ;--------------------------------------------------------
@@ -200,7 +225,7 @@ Index: sdcc/device/lib/mos6502/_modsint.s
  	jsr 	___sdivmod16
 Index: sdcc/device/lib/mos6502/_modslong.s
 ===================================================================
---- sdcc/device/lib/mos6502/_modslong.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_modslong.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_modslong.s	(working copy)
 @@ -49,7 +49,7 @@
  ;--------------------------------------------------------
@@ -208,12 +233,12 @@ Index: sdcc/device/lib/mos6502/_modslong.s
  ;--------------------------------------------------------
 -	.area CODE
 +	.area _CODE
+ 
  __modslong:
  	jsr	___sdivmod32
- 	lda	*s1
 Index: sdcc/device/lib/mos6502/_moduchar.s
 ===================================================================
---- sdcc/device/lib/mos6502/_moduchar.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_moduchar.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_moduchar.s	(working copy)
 @@ -45,7 +45,7 @@
  ;--------------------------------------------------------
@@ -221,12 +246,12 @@ Index: sdcc/device/lib/mos6502/_moduchar.s
  ;--------------------------------------------------------
 -	.area CODE
 +	.area _CODE
+ 
  __moduchar:
  	stx	*__moduint_PARM_2
- 	ldx	#0x00
 Index: sdcc/device/lib/mos6502/_moduint.s
 ===================================================================
---- sdcc/device/lib/mos6502/_moduint.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_moduint.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_moduint.s	(working copy)
 @@ -45,7 +45,7 @@
  ;--------------------------------------------------------
@@ -239,7 +264,7 @@ Index: sdcc/device/lib/mos6502/_moduint.s
  	jsr 	___udivmod16
 Index: sdcc/device/lib/mos6502/_modulong.s
 ===================================================================
---- sdcc/device/lib/mos6502/_modulong.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_modulong.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_modulong.s	(working copy)
 @@ -48,7 +48,7 @@
  ;--------------------------------------------------------
@@ -252,7 +277,7 @@ Index: sdcc/device/lib/mos6502/_modulong.s
  	jsr 	___udivmod32
 Index: sdcc/device/lib/mos6502/_mulint.s
 ===================================================================
---- sdcc/device/lib/mos6502/_mulint.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_mulint.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_mulint.s	(working copy)
 @@ -51,7 +51,7 @@
  ;--------------------------------------------------------
@@ -265,7 +290,7 @@ Index: sdcc/device/lib/mos6502/_mulint.s
  	eor #0xff	; invert P1 to avoid clc in the add loops
 Index: sdcc/device/lib/mos6502/_mullong.s
 ===================================================================
---- sdcc/device/lib/mos6502/_mullong.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_mullong.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_mullong.s	(working copy)
 @@ -55,7 +55,7 @@
  ;--------------------------------------------------------
@@ -278,7 +303,7 @@ Index: sdcc/device/lib/mos6502/_mullong.s
  	ldx     #0
 Index: sdcc/device/lib/mos6502/_mulschar.s
 ===================================================================
---- sdcc/device/lib/mos6502/_mulschar.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_mulschar.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_mulschar.s	(working copy)
 @@ -52,7 +52,7 @@
  ;--------------------------------------------------------
@@ -291,7 +316,7 @@ Index: sdcc/device/lib/mos6502/_mulschar.s
  	sta	*s1
 Index: sdcc/device/lib/mos6502/_muluchar.s
 ===================================================================
---- sdcc/device/lib/mos6502/_muluchar.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_muluchar.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_muluchar.s	(working copy)
 @@ -49,7 +49,7 @@
  ;--------------------------------------------------------
@@ -304,7 +329,7 @@ Index: sdcc/device/lib/mos6502/_muluchar.s
  	sta     *arg1
 Index: sdcc/device/lib/mos6502/_setjmp.s
 ===================================================================
---- sdcc/device/lib/mos6502/_setjmp.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_setjmp.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_setjmp.s	(working copy)
 @@ -52,7 +52,7 @@
  ;--------------------------------------------------------
@@ -317,7 +342,7 @@ Index: sdcc/device/lib/mos6502/_setjmp.s
  ; int __setjmp (jmp_buf buf)
 Index: sdcc/device/lib/mos6502/_strchr.s
 ===================================================================
---- sdcc/device/lib/mos6502/_strchr.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_strchr.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_strchr.s	(working copy)
 @@ -43,7 +43,7 @@
  ;--------------------------------------------------------
@@ -330,7 +355,7 @@ Index: sdcc/device/lib/mos6502/_strchr.s
  	sta	*DPTR+0
 Index: sdcc/device/lib/mos6502/_strcmp.s
 ===================================================================
---- sdcc/device/lib/mos6502/_strcmp.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_strcmp.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_strcmp.s	(working copy)
 @@ -50,7 +50,7 @@
  ;--------------------------------------------------------
@@ -343,7 +368,7 @@ Index: sdcc/device/lib/mos6502/_strcmp.s
  	sta	*_str1+0
 Index: sdcc/device/lib/mos6502/_strcpy.s
 ===================================================================
---- sdcc/device/lib/mos6502/_strcpy.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_strcpy.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_strcpy.s	(working copy)
 @@ -51,7 +51,7 @@
  ;--------------------------------------------------------
@@ -356,7 +381,7 @@ Index: sdcc/device/lib/mos6502/_strcpy.s
  	sta	*_dst+0
 Index: sdcc/device/lib/mos6502/_strrchr.s
 ===================================================================
---- sdcc/device/lib/mos6502/_strrchr.s	(revision 15614)
+--- sdcc/device/lib/mos6502/_strrchr.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/_strrchr.s	(working copy)
 @@ -43,7 +43,7 @@
  ;--------------------------------------------------------
@@ -369,25 +394,25 @@ Index: sdcc/device/lib/mos6502/_strrchr.s
  	jsr _strlen
 Index: sdcc/device/lib/mos6502/abs.s
 ===================================================================
---- sdcc/device/lib/mos6502/abs.s	(revision 15614)
+--- sdcc/device/lib/mos6502/abs.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/abs.s	(working copy)
-@@ -38,7 +38,7 @@
+@@ -37,7 +37,7 @@
+ ;--------------------------------------------------------
  ; code
  ;--------------------------------------------------------
- 
 -	.area CODE
 +	.area _CODE
+ 	
  _abs:
  	cpx #0x00
- 	bpl skip
 Index: sdcc/device/lib/mos6502/crt0.s
 ===================================================================
---- sdcc/device/lib/mos6502/crt0.s	(revision 15614)
+--- sdcc/device/lib/mos6502/crt0.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/crt0.s	(working copy)
-@@ -30,19 +30,18 @@
- 	.module crt0
- 
- 	;; Ordering of segments for the linker.
+@@ -32,19 +32,18 @@
+ ;--------------------------------------------------------
+ ;  Ordering of segments for the linker.
+ ;--------------------------------------------------------
 -	.area ZP      (PAG)
 +	.area _ZP     (PAG)
  	.area OSEG    (PAG, OVR)
@@ -397,32 +422,32 @@ Index: sdcc/device/lib/mos6502/crt0.s
 -	.area BSS
 +	.area _BSS
  
-+;	.area _CODE
-+	.area _GSINIT
-+	.area _GSFINAL
  	.area _CODE
 -	.area GSINIT
 -	.area GSFINAL
 -	.area CODE
 -	.area RODATA
 -	.area XINIT
++	.area _GSINIT
++	.area _GSFINAL
++	.area _CODE
 +	.area _RODATA
 +	.area _XINIT
  
- 	;; Reset/interrupt vectors
- 	.area CODEIVT (ABS)
-@@ -51,7 +50,7 @@
- 	.dw	__sdcc_gs_init_startup ; RESET
- 	.dw	__sdcc_gs_init_startup ; IRQ/BRK
- 
+ ;--------------------------------------------------------
+ ;  Reset/interrupt vectors
+@@ -58,7 +57,7 @@
+ ;--------------------------------------------------------
+ ;  Startup Code
+ ;--------------------------------------------------------
 -	.area GSINIT
 +	.area _GSINIT
  __sdcc_gs_init_startup:
  	ldx	#0xff
  	txs
-@@ -68,8 +67,8 @@
+@@ -75,8 +74,8 @@
  __sdcc_init_data:
- ;; clear ZP
+ ; clear ZP
  	lda	#0x00
 -	ldx	#<s_ZP
 -	ldy	#<l_ZP
@@ -430,11 +455,11 @@ Index: sdcc/device/lib/mos6502/crt0.s
 +	ldy	#<l__ZP
  	beq	00101$
  00100$:
- 	sta	*0,X
-@@ -79,30 +78,30 @@
+ 	sta	*0,x
+@@ -86,33 +85,33 @@
  00101$:
  
- ;; initialize DATA
+ ; initialize DATA
 -	lda	#>l_XINIT
 +	lda	#>l__XINIT
  	sta	*___memcpy_PARM_3+1
@@ -453,7 +478,7 @@ Index: sdcc/device/lib/mos6502/crt0.s
 +	ldx	#>s__DATA
  	jsr	___memcpy
  
- ;; clear BSS
+ ; clear BSS
 -	lda	#>l_BSS
 +	lda	#>l__BSS
  	sta	*_memset_PARM_3+1
@@ -468,6 +493,9 @@ Index: sdcc/device/lib/mos6502/crt0.s
 +	ldx	#>s__BSS
  	jsr	_memset
  
+ ;--------------------------------------------------------
+ ;  Call Main
+ ;--------------------------------------------------------
 -	.area GSFINAL
 +	.area _GSFINAL
  __sdcc_program_startup:
@@ -475,7 +503,7 @@ Index: sdcc/device/lib/mos6502/crt0.s
  	jmp	.
 Index: sdcc/device/lib/mos6502/div.s
 ===================================================================
---- sdcc/device/lib/mos6502/div.s	(revision 15614)
+--- sdcc/device/lib/mos6502/div.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/div.s	(working copy)
 @@ -44,7 +44,7 @@
  ;--------------------------------------------------------
@@ -488,7 +516,7 @@ Index: sdcc/device/lib/mos6502/div.s
  	jsr	___sdivmod16
 Index: sdcc/device/lib/mos6502/fabsf.s
 ===================================================================
---- sdcc/device/lib/mos6502/fabsf.s	(revision 15614)
+--- sdcc/device/lib/mos6502/fabsf.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/fabsf.s	(working copy)
 @@ -43,7 +43,7 @@
  ;--------------------------------------------------------
@@ -496,25 +524,56 @@ Index: sdcc/device/lib/mos6502/fabsf.s
  ;--------------------------------------------------------
 -	.area CODE
 +	.area _CODE
- ;------------------------------------------------------------
  
  _fabsf:
+ 	lda	*_fabsf_PARM_1+3
+Index: sdcc/device/lib/mos6502/labs.s
+===================================================================
+--- sdcc/device/lib/mos6502/labs.s	(revision 16561)
++++ sdcc/device/lib/mos6502/labs.s	(working copy)
+@@ -44,7 +44,7 @@
+ ;--------------------------------------------------------
+ ; code
+ ;--------------------------------------------------------
+-	.area CODE
++	.area _CODE
+ 
+ _labs:
+ 	lda	*(_labs_PARM_1+3)
 Index: sdcc/device/lib/mos6502/ldiv.s
 ===================================================================
---- sdcc/device/lib/mos6502/ldiv.s	(revision 15614)
+--- sdcc/device/lib/mos6502/ldiv.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/ldiv.s	(working copy)
+@@ -27,7 +27,7 @@
+ ;-------------------------------------------------------------------------
+ 
+ 	.module ldiv
+-	
++
+ ;--------------------------------------------------------
+ ; exported symbols
+ ;--------------------------------------------------------
 @@ -48,7 +48,7 @@
  ;--------------------------------------------------------
  ; code
  ;--------------------------------------------------------
 -	.area CODE
 +	.area _CODE
+ 
  _ldiv:
  	jsr	___sdivmod32
+@@ -68,7 +68,7 @@
+ 	txa
+ 	sbc	*rem+3
+ 	sta	*rem+3
+-rempos:	
++rempos:
  	lda	*s1
+ 	eor	*s2
+ 	bpl	pos
 Index: sdcc/device/lib/mos6502/memcpy.s
 ===================================================================
---- sdcc/device/lib/mos6502/memcpy.s	(revision 15614)
+--- sdcc/device/lib/mos6502/memcpy.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/memcpy.s	(working copy)
 @@ -62,7 +62,7 @@
  ;--------------------------------------------------------
@@ -525,9 +584,44 @@ Index: sdcc/device/lib/mos6502/memcpy.s
  
  _memcpy:
  ___memcpy:
+Index: sdcc/device/lib/mos6502/rand.s
+===================================================================
+--- sdcc/device/lib/mos6502/rand.s	(revision 16561)
++++ sdcc/device/lib/mos6502/rand.s	(working copy)
+@@ -47,11 +47,11 @@
+ ;--------------------------------------------------------
+ ; uninitialized external ram data
+ ;--------------------------------------------------------
+-	.area BSS
++	.area _BSS
+ ;--------------------------------------------------------
+ ; initialized external ram data
+ ;--------------------------------------------------------
+-	.area DATA
++	.area _DATA
+ _seed:
+ 	.ds 4
+ 
+@@ -58,7 +58,7 @@
+ ;--------------------------------------------------------
+ ; code
+ ;--------------------------------------------------------
+-	.area CODE
++	.area _CODE
+ ;------------------------------------------------------------
+ ;sloc0         Allocated with name '_rand_sloc0_1_0'
+ ;sloc1         Allocated with name '_rand_sloc1_1_0'
+@@ -150,6 +150,6 @@
+ 	sta	(_seed+3)
+ 	rts
+ 
+-	.area XINIT
++	.area _XINIT
+ __xinit__seed:
+ 	.byte #0x01, #0x00, #0x00, #0x80	; 2147483649
 Index: sdcc/device/lib/mos6502/strlen.s
 ===================================================================
---- sdcc/device/lib/mos6502/strlen.s	(revision 15614)
+--- sdcc/device/lib/mos6502/strlen.s	(revision 16561)
 +++ sdcc/device/lib/mos6502/strlen.s	(working copy)
 @@ -42,7 +42,7 @@
  ;--------------------------------------------------------
@@ -540,16 +634,16 @@ Index: sdcc/device/lib/mos6502/strlen.s
  	sta	*_src+0
 Index: sdcc/device/lib/mos6502-stack-auto/__sdcc_indirect_jsr.s
 ===================================================================
---- sdcc/device/lib/mos6502-stack-auto/__sdcc_indirect_jsr.s	(revision 15614)
+--- sdcc/device/lib/mos6502-stack-auto/__sdcc_indirect_jsr.s	(revision 16561)
 +++ sdcc/device/lib/mos6502-stack-auto/__sdcc_indirect_jsr.s	(working copy)
 @@ -1,3 +1,3 @@
 -.area CODE
 +.area _CODE
  __sdcc_indirect_jsr::
- 	jmp	[REGTEMP]
+ 	jmp	[DPTR]
 Index: sdcc/device/lib/mos6502-stack-auto/__sdcc_regs.s
 ===================================================================
---- sdcc/device/lib/mos6502-stack-auto/__sdcc_regs.s	(revision 15614)
+--- sdcc/device/lib/mos6502-stack-auto/__sdcc_regs.s	(revision 16561)
 +++ sdcc/device/lib/mos6502-stack-auto/__sdcc_regs.s	(working copy)
 @@ -6,7 +6,7 @@
  
@@ -560,9 +654,22 @@ Index: sdcc/device/lib/mos6502-stack-auto/__sdcc_regs.s
  REGTEMP::
  ___SDCC_m6502_ret0::
          .ds 1
+Index: sdcc/device/lib/mos6502-stack-auto/_muluchar.s
+===================================================================
+--- sdcc/device/lib/mos6502-stack-auto/_muluchar.s	(revision 16561)
++++ sdcc/device/lib/mos6502-stack-auto/_muluchar.s	(working copy)
+@@ -49,7 +49,7 @@
+ ;--------------------------------------------------------
+ ; code
+ ;--------------------------------------------------------
+-	.area CODE
++	.area _CODE
+ 
+ __muluchar:
+         pha			; arg1 is in 0x102,x
 Index: sdcc/device/lib/mos6502-stack-auto/_setjmp.s
 ===================================================================
---- sdcc/device/lib/mos6502-stack-auto/_setjmp.s	(revision 15614)
+--- sdcc/device/lib/mos6502-stack-auto/_setjmp.s	(revision 16561)
 +++ sdcc/device/lib/mos6502-stack-auto/_setjmp.s	(working copy)
 @@ -51,7 +51,7 @@
  ;--------------------------------------------------------
@@ -573,25 +680,16 @@ Index: sdcc/device/lib/mos6502-stack-auto/_setjmp.s
  
  ;------------------------------------------------------------
  ; int __setjmp (jmp_buf buf)
-@@ -59,7 +59,7 @@
- 
- ___setjmp:
-         stx	*(ptr + 1)		; msb(buf)
--        sta	*(ptr + 0)		; lsb(buf)
-+        sta	*(ptr + 0)		; lsb(buf)D
- 
-         ; save stack pointer
-         tsx
 Index: sdcc/device/lib/mos6502-stack-auto/crt0.s
 ===================================================================
---- sdcc/device/lib/mos6502-stack-auto/crt0.s	(revision 15614)
+--- sdcc/device/lib/mos6502-stack-auto/crt0.s	(revision 16561)
 +++ sdcc/device/lib/mos6502-stack-auto/crt0.s	(working copy)
-@@ -30,19 +30,18 @@
- 	.module crt0
- 
- 	;; Ordering of segments for the linker.
+@@ -32,19 +32,18 @@
+ ;--------------------------------------------------------
+ ;  Ordering of segments for the linker.
+ ;--------------------------------------------------------
 -	.area ZP      (PAG)
-+	.area _ZP     (PAG)
++	.area _ZP      (PAG)
  	.area OSEG    (PAG, OVR)
  
  	.area _DATA
@@ -599,32 +697,32 @@ Index: sdcc/device/lib/mos6502-stack-auto/crt0.s
 -	.area BSS
 +	.area _BSS
  
-+;	.area _CODE
-+	.area _GSINIT
-+	.area _GSFINAL
  	.area _CODE
 -	.area GSINIT
 -	.area GSFINAL
 -	.area CODE
 -	.area RODATA
 -	.area XINIT
++	.area _GSINIT
++	.area _GSFINAL
++	.area _CODE
 +	.area _RODATA
 +	.area _XINIT
  
- 	;; Reset/interrupt vectors
- 	.area CODEIVT (ABS)
-@@ -51,7 +50,7 @@
- 	.dw	__sdcc_gs_init_startup ; RESET
- 	.dw	__sdcc_gs_init_startup ; IRQ/BRK
- 
+ ;--------------------------------------------------------
+ ;  Reset/interrupt vectors
+@@ -58,7 +57,7 @@
+ ;--------------------------------------------------------
+ ;  Startup Code
+ ;--------------------------------------------------------
 -	.area GSINIT
 +	.area _GSINIT
  __sdcc_gs_init_startup:
  	ldx	#0xff
  	txs
-@@ -68,8 +67,8 @@
+@@ -75,8 +74,8 @@
  __sdcc_init_data:
- ;; clear ZP
+ ; clear ZP
  	lda	#0x00
 -	ldx	#<s_ZP
 -	ldy	#<l_ZP
@@ -633,17 +731,16 @@ Index: sdcc/device/lib/mos6502-stack-auto/crt0.s
  	beq	00101$
  00100$:
  	sta	*0,X
-@@ -79,17 +78,17 @@
+@@ -86,16 +85,16 @@
  00101$:
  
- ;; initialize DATA
+ ; initialize DATA
 -	lda	#>l_XINIT
 +	lda	#>l__XINIT
  	pha
 -	lda	#<l_XINIT
 +	lda	#<l__XINIT
  	pha
- 
 -	lda	#>s_XINIT
 +	lda	#>s__XINIT
  	pha
@@ -657,10 +754,10 @@ Index: sdcc/device/lib/mos6502-stack-auto/crt0.s
  	jsr	___memcpy
  	pla
  	pla
-@@ -97,17 +96,17 @@
+@@ -103,20 +102,20 @@
  	pla
  
- ;; clear BSS
+ ; clear BSS
 -	lda	#>l_BSS
 +	lda	#>l__BSS
  	pha
@@ -675,6 +772,9 @@ Index: sdcc/device/lib/mos6502-stack-auto/crt0.s
 +	ldx	#>s__BSS
  	jsr	_memset
  
+ ;--------------------------------------------------------
+ ;  Final Cleanup
+ ;--------------------------------------------------------
 -	.area GSFINAL
 +	.area _GSFINAL
  __sdcc_program_startup:
@@ -682,7 +782,7 @@ Index: sdcc/device/lib/mos6502-stack-auto/crt0.s
  	jmp	.
 Index: sdcc/src/SDCCasm.c
 ===================================================================
---- sdcc/src/SDCCasm.c	(revision 15614)
+--- sdcc/src/SDCCasm.c	(revision 16561)
 +++ sdcc/src/SDCCasm.c	(working copy)
 @@ -408,10 +408,10 @@
    {"immed", "#"},
@@ -701,23 +801,9 @@ Index: sdcc/src/SDCCasm.c
    {"db", ".db"},
 Index: sdcc/src/mos6502/main.c
 ===================================================================
---- sdcc/src/mos6502/main.c	(revision 15614)
+--- sdcc/src/mos6502/main.c	(revision 16561)
 +++ sdcc/src/mos6502/main.c	(working copy)
-@@ -229,10 +229,11 @@
-   tfprintf (of, "\t!area\n", STATIC_NAME);
-   tfprintf (of, "\t!area\n", GSFINAL_NAME);
-   tfprintf (of, "\t!area\n", CODE_NAME);
--  tfprintf (of, "\t!area\n", CONST_NAME);
-+  if(CONST_NAME != NULL)
-+      tfprintf (of, "\t!area\n", CONST_NAME);
-   tfprintf (of, "\t!area\n", XINIT_NAME);
- 
--  tfprintf (of, "\t!area\n", "_DATA");
-+  tfprintf (of, "\t!area\n", "DATA");
-   tfprintf (of, "\t!area\n", XIDATA_NAME);
-   //  if(options.xdata_overlay)
-   //      tfprintf (of, "\t!area    (OVR)\n", OVERLAY_NAME);
-@@ -749,10 +750,10 @@
+@@ -738,10 +738,10 @@
        "GSINIT",                 /* static initialization */
        "OSEG    (PAG, OVR)",     /* overlay */
        "GSFINAL",                /* gsfinal */
@@ -730,7 +816,7 @@ Index: sdcc/src/mos6502/main.c
        "CABS    (ABS)",          /* cabs_name - const absolute data */
        "DABS    (ABS)",          /* xabs_name - absolute xdata */
        NULL,                     /* iabs_name */
-@@ -918,10 +919,10 @@
+@@ -910,10 +910,10 @@
        "GSINIT",                 // static initialization
        "OSEG    (PAG, OVR)",     // overlay
        "GSFINAL",                // gsfinal
@@ -739,7 +825,7 @@ Index: sdcc/src/mos6502/main.c
        "DATA",                   // initialized xdata
        "XINIT",                  // a code copy of DATA
 -      "RODATA",                 // const_name - const data (code or not)
-+      NULL    ,                 // const_name - const data (code or not)
++      NULL,                     // const_name - const data (code or not)
        "CABS    (ABS)",          // cabs_name - const absolute data (code or not)
        "DABS    (ABS)",          // xabs_name - absolute xdata
        NULL,                     // iabs_name - absolute data
